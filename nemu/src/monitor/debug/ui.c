@@ -84,7 +84,7 @@ static struct {
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
   { "si", "si [N]：单步执行N条指令，N可省，默认执行一条", cmd_si },
-  { "info", "info r：打印寄存器状态；info w：打印监视点信息", cmd_info },
+  { "info", "info r：打印寄存器状态；\n       info w：打印监视点信息", cmd_info },
   { "p", "p EXPR：求出表达式EXPR（基础算术运算）的值", cmd_p},
   { "x", "x N EXPR：扫描内存，即求出EXPR的值，然后从EXPR地址上输出N个4字节数据", cmd_x},
   { "w", "w EXPR：当EXPR的值发生变化时，暂停程序", cmd_w},
