@@ -92,8 +92,9 @@ static int cmd_info(char *args) {
 }
 
 static int cmd_p(char *args) {
+  char* e = strtok(args, " ");
   bool ok;
-  int value = expr(args, &ok);
+  int value = expr(e, &ok);
   
   if (ok) {
     printf("%d\n", value);
