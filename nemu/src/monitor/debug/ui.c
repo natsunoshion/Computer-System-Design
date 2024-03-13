@@ -38,6 +38,43 @@ static int cmd_q(char *args) {
 
 static int cmd_help(char *args);
 
+static int cmd_si(char *args) {
+  // 步数默认为1
+  uint64_t N = 1;
+
+  // 如果有参数，那就把步数拷贝到NN
+  if (args != NULL) {
+    if (sscanf(args, "%llu", &N) <= 0) {
+      printf("参数非法！\n");
+      return 0;
+    }
+  }
+
+  // 调用api执行N步
+  cpu_exec(N);
+  return 0;
+}
+
+static int cmd_info(char *args) {
+  return -1;
+}
+
+static int cmd_p(char *args) {
+  return -1;
+}
+
+static int cmd_x(char *args) {
+  return -1;
+}
+
+static int cmd_w(char *args) {
+  return -1;
+}
+
+static int cmd_d(char *args) {
+  return -1;
+}
+
 static struct {
   char *name;
   char *description;
@@ -46,6 +83,12 @@ static struct {
   { "help", "Display informations about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
+  { "si", "si [N]：单步执行N条指令，N可省，默认执行一条", cmd_si },
+  { "info", "info r：打印寄存器状态；info w：打印监视点信息", cmd_info },
+  { "p", "p EXPR：求出表达式EXPR（基础算术运算）的值", cmd_p},
+  { "x", "x N EXPR：扫描内存，即求出EXPR的值，然后从EXPR地址上输出N个4字节数据", cmd_x},
+  { "w", "w EXPR：当EXPR的值发生变化时，暂停程序", cmd_w},
+  { "d", "d N：删除N号监视点", cmd_d},
 
   /* TODO: Add more commands */
 
