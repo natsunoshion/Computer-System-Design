@@ -1,16 +1,17 @@
-#include "monitor/monitor.h"
 #include "monitor/expr.h"
+#include "monitor/monitor.h"
 #include "monitor/watchpoint.h"
 #include "nemu.h"
 
-#include <stdlib.h>
-#include <readline/readline.h>
 #include <readline/history.h>
+#include <readline/readline.h>
+#include <stdlib.h>
 
 void cpu_exec(uint64_t);
 
-/* We use the `readline' library to provide more flexibility to read from stdin. */
-char* rl_gets() {
+/* We use the `readline' library to provide more flexibility to read from stdin.
+ */
+char *rl_gets() {
   static char *line_read = NULL;
 
   if (line_read) {
@@ -32,9 +33,7 @@ static int cmd_c(char *args) {
   return 0;
 }
 
-static int cmd_q(char *args) {
-  return -1;
-}
+static int cmd_q(char *args) { return -1; }
 
 static int cmd_help(char *args);
 
@@ -61,26 +60,26 @@ static int cmd_info(char *args) {
     printf("参数非法！\n");
     return -1;
   }
-  bool reg=SUBCMD=='r';
-  bool watchpoint=SUBCMD=='w';
+  bool reg = SUBCMD == 'r';
+  bool watchpoint = SUBCMD == 'w';
   if (!reg && !watchpoint) {
-    printf("参数非法\n");
+    printf("参数非法！\n");
     return -1;
   }
   if (reg) {
     // 寄存器
     // 32bit
-    for (int i=0; i<8; i++) {
+    for (int i = 0; i < 8; i++) {
       printf("%s: 0x%x\n", regsl[i], reg_l(i)); // 16进制
     }
 
     // 16bit
-    for (int i=0; i<8; i++) {
+    for (int i = 0; i < 8; i++) {
       printf("%s: 0x%x\n", regsw[i], reg_w(i));
     }
 
     // 8bit
-    for (int i=0; i<8; i++) {
+    for (int i = 0; i < 8; i++) {
       printf("%s: 0x%x\n", regsb[i], reg_b(i));
     }
     printf("eip: 0x%x\n", cpu.eip); // eip
@@ -92,48 +91,78 @@ static int cmd_info(char *args) {
 }
 
 static int cmd_p(char *args) {
-  char* e = strtok(args, " ");
   bool ok;
-  int value = expr(e, &ok);
-  
+  int value = expr(args, &ok);
+
   if (ok) {
     printf("%d\n", value);
-  }
-  else {
-    printf("Syntax error.\n");
+  } else {
+    printf("语法错误！\n");
   }
 
   return 0;
 }
 
 static int cmd_x(char *args) {
-  return -1;
+  int num_bytes = 0;      // 要检查的字节数
+  vaddr_t memory_address; // 开始检查的内存地址
+  // char *num_bytes_str = strtok(args, " ");
+  char *address_str = strtok(NULL, " ");
+
+  if (args == NULL) {
+    printf("参数非法！\n");
+    return 0;
+  }
+  if (sscanf(args, "%d 0x%x", &num_bytes, &memory_address) <= 0) {
+    printf("参数非法！\n");
+    return 0;
+  }
+
+  bool valid_expr;
+  memory_address =
+      expr(address_str, &valid_expr); // 计算表达式的值来获取内存地址
+  if (!valid_expr) {
+    printf("语法错误！\n");
+    return 0;
+  }
+  printf("内存：");
+  for (int i = 0; i < num_bytes; i++) {
+    // 每4个字节换行打印，易于观察
+    if (i % 4) {
+      printf("  0x%02x",
+             vaddr_read(memory_address + i, 1)); // 读取并打印一个字节
+    } else {
+      printf("\n0x%x:  0x%02x", memory_address + i,
+             vaddr_read(memory_address + i, 1)); // 新行开始时打印地址
+    }
+  }
+  printf("\n");
+
+  return 0;
 }
 
-static int cmd_w(char *args) {
-  return -1;
-}
+static int cmd_w(char *args) { return -1; }
 
-static int cmd_d(char *args) {
-  return -1;
-}
+static int cmd_d(char *args) { return -1; }
 
 static struct {
   char *name;
   char *description;
-  int (*handler) (char *);
-} cmd_table [] = {
-  { "help", "Display informations about all supported commands", cmd_help },
-  { "c", "Continue the execution of the program", cmd_c },
-  { "q", "Exit NEMU", cmd_q },
-  { "si", "si [N]：单步执行N条指令，N可省，默认执行一条", cmd_si },
-  { "info", "info r：打印寄存器状态\n       info w：打印监视点信息", cmd_info },
-  { "p", "p EXPR：求出表达式EXPR（基础算术运算）的值", cmd_p},
-  { "x", "x N EXPR：扫描内存，即求出EXPR的值，然后从EXPR地址上输出N个4字节数据", cmd_x},
-  { "w", "w EXPR：当EXPR的值发生变化时，暂停程序", cmd_w},
-  { "d", "d N：删除N号监视点", cmd_d},
+  int (*handler)(char *);
+} cmd_table[] = {
+    {"help", "Display informations about all supported commands", cmd_help},
+    {"c", "Continue the execution of the program", cmd_c},
+    {"q", "Exit NEMU", cmd_q},
+    {"si", "si [N]：单步执行N条指令，N可省，默认执行一条", cmd_si},
+    {"info", "info r：打印寄存器状态\n       info w：打印监视点信息", cmd_info},
+    {"p", "p EXPR：求出表达式EXPR（基础算术运算）的值", cmd_p},
+    {"x",
+     "x N EXPR：扫描内存，即求出EXPR的值，然后从EXPR地址上输出N个4字节数据",
+     cmd_x},
+    {"w", "w EXPR：当EXPR的值发生变化时，暂停程序", cmd_w},
+    {"d", "d N：删除N号监视点", cmd_d},
 
-  /* TODO: Add more commands */
+    /* TODO: Add more commands */
 
 };
 
@@ -146,12 +175,11 @@ static int cmd_help(char *args) {
 
   if (arg == NULL) {
     /* no argument given */
-    for (i = 0; i < NR_CMD; i ++) {
+    for (i = 0; i < NR_CMD; i++) {
       printf("%s - %s\n", cmd_table[i].name, cmd_table[i].description);
     }
-  }
-  else {
-    for (i = 0; i < NR_CMD; i ++) {
+  } else {
+    for (i = 0; i < NR_CMD; i++) {
       if (strcmp(arg, cmd_table[i].name) == 0) {
         printf("%s - %s\n", cmd_table[i].name, cmd_table[i].description);
         return 0;
@@ -174,7 +202,9 @@ void ui_mainloop(int is_batch_mode) {
 
     /* extract the first token as the command */
     char *cmd = strtok(str, " ");
-    if (cmd == NULL) { continue; }
+    if (cmd == NULL) {
+      continue;
+    }
 
     /* treat the remaining string as the arguments,
      * which may need further parsing
@@ -190,13 +220,17 @@ void ui_mainloop(int is_batch_mode) {
 #endif
 
     int i;
-    for (i = 0; i < NR_CMD; i ++) {
+    for (i = 0; i < NR_CMD; i++) {
       if (strcmp(cmd, cmd_table[i].name) == 0) {
-        if (cmd_table[i].handler(args) < 0) { return; }
+        if (cmd_table[i].handler(args) < 0) {
+          return;
+        }
         break;
       }
     }
 
-    if (i == NR_CMD) { printf("Unknown command '%s'\n", cmd); }
+    if (i == NR_CMD) {
+      printf("Unknown command '%s'\n", cmd);
+    }
   }
 }
