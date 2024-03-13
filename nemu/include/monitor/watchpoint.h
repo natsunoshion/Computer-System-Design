@@ -8,8 +8,12 @@ typedef struct watchpoint {
   struct watchpoint *next;
 
   /* TODO: Add more members if necessary */
-
+  // 被监视的表达式和值
+  char expr[100];
+  int value;
 
 } WP;
+
+void print_wp();
 
 #endif

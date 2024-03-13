@@ -19,5 +19,16 @@ void init_wp_pool() {
 }
 
 /* TODO: Implement the functionality of watchpoint */
-
+void print_wp() {
+  if (head == NULL) {
+    printf("暂无监视点！\n");
+    return;
+  }
+  printf("监视点：\n");
+  WP *curr = head;
+  while (curr) {
+    printf("%d  %s: %d\n", curr->NO, curr->expr, curr->value);
+    curr = curr->next;
+  }
+}
 
