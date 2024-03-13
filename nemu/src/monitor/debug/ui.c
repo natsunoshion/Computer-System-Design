@@ -122,7 +122,7 @@ static int cmd_x(char *args) {
   memory_address =
       expr(address_str, &valid_expr); // 计算表达式的值来获取内存地址
   if (!valid_expr) {
-    printf("语法错误！\n");
+    printf("表达式语法错误！\n");
     return 0;
   }
   printf("内存：");
@@ -141,9 +141,25 @@ static int cmd_x(char *args) {
   return 0;
 }
 
-static int cmd_w(char *args) { return -1; }
+static int cmd_w(char *args) {
+  new_wp(args);
+  return 0;
+}
 
-static int cmd_d(char *args) { return -1; }
+static int cmd_d(char *args) {
+  int num = 0;
+  if (sscanf(args, "%d", &num) <= 0) {
+    printf("参数非法！\n");
+    return 0;
+  }
+
+  if (free_wp(num)) {
+    printf("成功删除监视点%d\n", num);
+  } else {
+    printf("无法找到监视点%d！\n", num);
+  }
+  return 0;
+}
 
 static struct {
   char *name;
