@@ -364,15 +364,15 @@ uint32_t expr(char *e, bool *success) {
 
   /* TODO: Insert codes to evaluate the expression. */
   // 处理单目运算
-  for (int i = 0; i < nr_token; i++) {
-    if (tokens[i].type == '*' || tokens[i].type == '-') {
-      if (i == 0 ||
-          (tokens[i - 1].type != TK_DEC && tokens[i - 1].type != TK_HEX &&
-           tokens[i - 1].type != TK_REG && tokens[i - 1].type != ')')) {
-        tokens[i].type = tokens[i].type == '*' ? TK_DEREF : TK_NEG;
-      }
-    }
-  }
+  // for (int i = 0; i < nr_token; i++) {
+  //   if (tokens[i].type == '*' || tokens[i].type == '-') {
+  //     if (i == 0 ||
+  //         (tokens[i - 1].type != TK_DEC && tokens[i - 1].type != TK_HEX &&
+  //          tokens[i - 1].type != TK_REG && tokens[i - 1].type != ')')) {
+  //       tokens[i].type = tokens[i].type == '*' ? TK_DEREF : TK_NEG;
+  //     }
+  //   }
+  // }
   int value = eval(0, nr_token - 1, success);
   return value;
 }
