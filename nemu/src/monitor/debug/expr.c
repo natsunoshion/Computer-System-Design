@@ -236,6 +236,10 @@ static int eval(int p, int q) { // 求值函数
       break;
     case TK_REG: {
       // 对寄存器求值
+      char temp[32];
+      strcpy(temp, "$");
+      strcat(temp, tokens[q].str);
+      strcpy(tokens[q].str, temp);
       if (strcmp(tokens[q].str, "eip") == 0) {
         return cpu.eip;
       }
@@ -248,7 +252,6 @@ static int eval(int p, int q) { // 求值函数
           return reg_b(i);
         }
       }
-      printf("%s", tokens[q].str);
       assert(0); // 未知寄存器
       break;
     }
