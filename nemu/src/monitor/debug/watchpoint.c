@@ -83,19 +83,19 @@ void print_wp() {
 }
 
 bool watch_wp() {
-  WP *temp;
-  temp = head;
+  WP *curr;
+  curr = head;
   bool *success = malloc(1);
-  while (temp != NULL) {
+  while (curr != NULL) {
     uint32_t curr_val;
-    curr_val = expr(temp->expr, success);
-    if (temp->value != curr_val) {
-      printf("%d号监测点表达式%s的值改变！\n", temp->NO, temp->expr);
-      printf("旧值: %d  新值: %d\n\n", temp->value, curr_val);
-      temp->value = curr_val;
+    curr_val = expr(curr->expr, success);
+    if (curr->value != curr_val) {
+      printf("%d号监测点表达式%s的值改变！\n", curr->NO, curr->expr);
+      printf("旧值: %d  新值: %d\n\n", curr->value, curr_val);
+      curr->value = curr_val;
       return false;
     }
-    temp = temp->next;
+    curr = curr->next;
   }
   return true;
 }
