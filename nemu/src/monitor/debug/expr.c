@@ -302,7 +302,7 @@ static int eval(int p, int q) { // 求值函数
       assert(0); // 未知运算符
     }
   }
-  return -1; // 表达式无法求值
+  return INT32_MAX; // 表达式无法求值
 }
 
 uint32_t expr(char *e, bool *success) {
@@ -326,5 +326,6 @@ uint32_t expr(char *e, bool *success) {
     }
   }
   int value = eval(0, nr_token - 1);
+  *success = value != INT32_MAX;
   return value;
 }
