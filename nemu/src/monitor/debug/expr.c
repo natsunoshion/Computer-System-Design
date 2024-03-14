@@ -166,7 +166,7 @@ int check_parentheses(int p, int q) {
   }
 }
 
-// 获取运算符的优先级
+// 获取运算符的优先级，数值越小，优先级越高
 int get_operator_priority(int type) {
   switch (type) {
   case TK_NEG:   // 单目负号
@@ -186,9 +186,8 @@ int get_operator_priority(int type) {
   case TK_OR:  // 逻辑或
     return 5;
   default:
-    // return 0; // 未知运算符给予最低优先级
-    printf("%d", type);
-    assert(0);
+    // 如果到了这里，那么是DEC或者HEX之类的，应该拥有最高优先级
+    return 0;
   }
 }
 
@@ -213,7 +212,7 @@ int get_domi_oper(int p, int q) {
 
     int token_prior = get_operator_priority(tokens[i].type); // 获取运算符优先级
 
-    // 更新最大优先级的运算符位置
+    // 更新最低优先级的运算符位置
     if (token_prior >= prior) {
       prior = token_prior;
       pos = i;
