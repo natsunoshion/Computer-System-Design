@@ -243,7 +243,6 @@ static int eval(int p, int q) { // 求值函数
       break;
     case TK_REG: {
       // 对寄存器求值
-      strcpy(tokens[q].str, tokens[q].str + 1);
       if (strcmp(tokens[q].str, "eip") == 0) {
         return cpu.eip;
       }
