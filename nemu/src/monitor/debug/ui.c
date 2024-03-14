@@ -104,15 +104,15 @@ static int cmd_p(char *args) {
 }
 
 static int cmd_x(char *args) {
-  int num_bytes = 0;      // 要检查的字节数
-  vaddr_t memory_address; // 开始检查的内存地址
-  // char *num_bytes_str = strtok(args, " ");
-  char *address_str = strtok(NULL, " ");
-
   if (args == NULL) {
     printf("参数非法！\n");
     return 0;
   }
+  int num_bytes = atoi(strtok(args, " ")); // 要检查的字节数
+  vaddr_t memory_address;                  // 开始检查的内存地址
+  // char *num_bytes_str = strtok(args, " ");
+  char *address_str = strtok(NULL, " ");
+
   if (sscanf(args, "%d 0x%x", &num_bytes, &memory_address) <= 0) {
     printf("参数非法！\n");
     return 0;
@@ -125,7 +125,7 @@ static int cmd_x(char *args) {
     printf("表达式语法错误！\n");
     return 0;
   }
-  printf("内存：");
+  printf("0x%x后%d个4字节的内存：", memory_address, num_bytes);
   for (int i = 0; i < num_bytes; i++) {
     // 每4个字节换行打印，易于观察
     if (i % 4) {
