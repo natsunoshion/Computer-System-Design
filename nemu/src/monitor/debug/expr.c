@@ -248,6 +248,7 @@ static int eval(int p, int q) { // 求值函数
           return reg_b(i);
         }
       }
+      printf("%s", tokens[q].str);
       assert(0); // 未知寄存器
       break;
     }
