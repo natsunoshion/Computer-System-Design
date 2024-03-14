@@ -4,6 +4,8 @@
 #define NR_WP 32
 
 static WP wp_pool[NR_WP];
+
+// 分配链表和空闲链表
 static WP *head, *free_;
 
 void init_wp_pool() {
@@ -18,7 +20,19 @@ void init_wp_pool() {
   free_ = wp_pool;
 }
 
-bool new_wp() { return true; }
+WP *new_wp() {
+  WP *temp;
+  if (free_ == NULL) {
+    // 没有空闲的WP，返回空
+    return NULL;
+  }
+  temp = free_;
+  free_ = free_->next;
+  temp->next = head;
+  head = temp;
+  temp->value = 0;
+  return temp;
+}
 
 bool free_wp(int num) { return true; }
 

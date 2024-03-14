@@ -142,6 +142,16 @@ static int cmd_x(char *args) {
 }
 
 static int cmd_w(char *args) {
+  bool ok;
+  WP *wp = new_wp();
+  strcpy(wp->expr, args);
+  wp->value = expr(args, &ok);
+  if (!ok) {
+    printf("表达式语法错误！\n");
+    return -1;
+  } else {
+    printf("成功将%d号监视点设置为%s\n", wp->NO, args);
+  }
   new_wp(args);
   return 0;
 }
