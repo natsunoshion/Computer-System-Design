@@ -20,4 +20,6 @@ bool free_wp(int num);
 
 void print_wp();
 
+bool watch_wp();
+
 #endif

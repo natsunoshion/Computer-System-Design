@@ -45,7 +45,7 @@ static int cmd_si(char *args) {
   if (args != NULL) {
     if (sscanf(args, "%llu", &N) <= 0) {
       printf("参数非法！\n");
-      return -1;
+      return 0;
     }
   }
 
@@ -58,13 +58,13 @@ static int cmd_info(char *args) {
   char SUBCMD;
   if (args == NULL || sscanf(args, "%c", &SUBCMD) <= 0) {
     printf("参数非法！\n");
-    return -1;
+    return 0;
   }
   bool reg = SUBCMD == 'r';
   bool watchpoint = SUBCMD == 'w';
   if (!reg && !watchpoint) {
     printf("参数非法！\n");
-    return -1;
+    return 0;
   }
   if (reg) {
     // 寄存器
@@ -148,11 +148,10 @@ static int cmd_w(char *args) {
   wp->value = expr(args, &ok);
   if (!ok) {
     printf("表达式语法错误！\n");
-    return -1;
+    return 0;
   } else {
-    printf("成功将%d号监视点设置为%s\n", wp->NO, args);
+    printf("成功将%s设置到%d号监视点\n", args, wp->NO);
   }
-  new_wp(args);
   return 0;
 }
 
