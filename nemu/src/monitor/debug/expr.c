@@ -251,7 +251,7 @@ static int eval(int p, int q) { // 求值函数
       break;
     }
     default:
-      printf("%d", tokens[q].type);
+      printf("%d %d", tokens[q].type, TK_REG);
       assert(0); // 未知类型
     }
     return res;
