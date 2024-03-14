@@ -186,6 +186,7 @@ int get_token_value(Token token) {
   switch (token.type) {
   case TK_DEC:
     sscanf(token.str, "%d", &ret_value);
+    printf("%d", ret_value);
     break;
   case TK_HEX:
     sscanf(token.str, "%x", &ret_value);
