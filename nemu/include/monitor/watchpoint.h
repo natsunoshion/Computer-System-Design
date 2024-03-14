@@ -9,7 +9,7 @@ typedef struct watchpoint {
 
   /* TODO: Add more members if necessary */
   // 被监视的表达式和值
-  char expr[100];
+  char expr[32]; // 表达式长度有限制
   int value;
 
 } WP;
