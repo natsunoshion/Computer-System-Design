@@ -219,7 +219,7 @@ int get_token_value(Token token) {
 int eval(int start, int end, bool *success) {
   // 若起点大于终点，表达式错误
   if (start > end) {
-    printf("Bad Expression!\n");
+    printf("表达式错误！\n");
     *success = false;
     return 0;
   }
@@ -361,7 +361,6 @@ uint32_t expr(char *e, bool *success) {
     *success = false;
     return 0;
   }
-  printf("debug\n");
 
   /* TODO: Insert codes to evaluate the expression. */
   // 处理单目运算
