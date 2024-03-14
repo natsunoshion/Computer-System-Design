@@ -361,6 +361,7 @@ uint32_t expr(char *e, bool *success) {
     *success = false;
     return 0;
   }
+  printf("debug\n");
 
   /* TODO: Insert codes to evaluate the expression. */
   // 处理单目运算
