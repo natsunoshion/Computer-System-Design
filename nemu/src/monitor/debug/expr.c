@@ -186,7 +186,8 @@ int get_operator_priority(int type) {
   case TK_OR:  // 逻辑或
     return 5;
   default:
-    return 0; // 未知运算符给予最低优先级
+    // return 0; // 未知运算符给予最低优先级
+    assert(0);
   }
 }
 
