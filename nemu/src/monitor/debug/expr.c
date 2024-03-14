@@ -224,7 +224,7 @@ int eval(int start, int end, bool *success) {
     *success = false;
     return 0;
   }
-  // 只有一个标记
+  // 只有一个token
   if (start == end) {
     // printf("%d %s\n", tokens[start].type, tokens[start].str);
     *success = true;
