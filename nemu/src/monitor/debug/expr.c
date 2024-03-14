@@ -186,7 +186,7 @@ int get_token_value(Token token) {
   switch (token.type) {
   case TK_DEC:
     sscanf(token.str, "%d", &ret_value);
-    printf("%d", ret_value);
+    // printf("%d", ret_value);
     break;
   case TK_HEX:
     sscanf(token.str, "%x", &ret_value);
@@ -226,136 +226,137 @@ int eval(int start, int end, bool *success) {
   }
   // 只有一个标记
   if (start == end) {
-    printf("%d %s\n", tokens[start].type, tokens[start].str);
+    // printf("%d %s\n", tokens[start].type, tokens[start].str);
+    *success = true;
     return get_token_value(tokens[start]);
-  } else {
-    tokens[++end].type = TK_NOTYPE; // 在末尾添加一个无类型标记
-    // 操作数栈和操作符栈
-    int num_stack[32];
-    Token op_stack[32];
-    int num_top = -1, op_top = 0;
-    op_stack[0].type = TK_NOTYPE; // 操作符栈初始值
-    for (int i = start; i <= end; i++) {
-      // 若标记是数字，则压入操作数栈
-      if (is_number_token(tokens[i].type)) {
-        num_stack[++num_top] = get_token_value(tokens[i]);
-      }
-      // 若标记是操作符
-      else {
-        // 检查栈顶操作符优先级
-        // 如果当前操作符优先级大于栈顶操作符，则压入操作符栈
-        if (get_operator_priority(tokens[i].type) >
-            get_operator_priority(op_stack[op_top].type)) {
-          if (tokens[i].type == '(') {
-            op_stack[++op_top].type = ')';
-          } else {
-            op_stack[++op_top] = tokens[i];
-          }
+  }
+  tokens[++end].type = TK_NOTYPE; // 在末尾添加一个无类型标记
+  // 操作数栈和操作符栈
+  int num_stack[32];
+  Token op_stack[32];
+  int num_top = -1, op_top = 0;
+  op_stack[0].type = TK_NOTYPE; // 操作符栈初始值
+  for (int i = start; i <= end; i++) {
+    // 若标记是数字，则压入操作数栈
+    if (is_number_token(tokens[i].type)) {
+      num_stack[++num_top] = get_token_value(tokens[i]);
+    }
+    // 若标记是操作符
+    else {
+      // 检查栈顶操作符优先级
+      // 如果当前操作符优先级大于栈顶操作符，则压入操作符栈
+      if (get_operator_priority(tokens[i].type) >
+          get_operator_priority(op_stack[op_top].type)) {
+        if (tokens[i].type == '(') {
+          op_stack[++op_top].type = ')';
+        } else {
+          op_stack[++op_top] = tokens[i];
         }
-        // 否则，计算临时结果
-        else {
-          while (op_top != 0 &&
-                 get_operator_priority(tokens[i].type) <=
-                     get_operator_priority(op_stack[op_top].type)) {
-            if (op_stack[op_top].type == ')') {
-              op_top--;
+      }
+      // 否则，计算临时结果
+      else {
+        while (op_top != 0 &&
+               get_operator_priority(tokens[i].type) <=
+                   get_operator_priority(op_stack[op_top].type)) {
+          if (op_stack[op_top].type == ')') {
+            op_top--;
+            break;
+          } else {
+            switch (op_stack[op_top--].type) {
+            case '+':
+              num_stack[num_top - 1] =
+                  num_stack[num_top] + num_stack[num_top - 1];
+              num_top--;
               break;
-            } else {
-              switch (op_stack[op_top--].type) {
-              case '+':
-                num_stack[num_top - 1] =
-                    num_stack[num_top] + num_stack[num_top - 1];
-                num_top--;
-                break;
-              case '-':
-                num_stack[num_top - 1] =
-                    num_stack[num_top] - num_stack[num_top - 1];
-                num_top--;
-                break;
-              case '*':
-                num_stack[num_top - 1] =
-                    num_stack[num_top] * num_stack[num_top - 1];
-                num_top--;
-                break;
-              case '/':
-                num_stack[num_top - 1] =
-                    num_stack[num_top] / num_stack[num_top - 1];
-                num_top--;
-                break;
-              case '<':
-                num_stack[num_top - 1] =
-                    num_stack[num_top] < num_stack[num_top - 1];
-                num_top--;
-                break;
-              case '>':
-                num_stack[num_top - 1] =
-                    num_stack[num_top] > num_stack[num_top - 1];
-                num_top--;
-                break;
-              case TK_EQ:
-                num_stack[num_top - 1] =
-                    num_stack[num_top] == num_stack[num_top - 1];
-                num_top--;
-                break;
-              case TK_NEQ:
-                num_stack[num_top - 1] =
-                    num_stack[num_top] != num_stack[num_top - 1];
-                num_top--;
-                break;
-              case TK_AND:
-                num_stack[num_top - 1] =
-                    num_stack[num_top] && num_stack[num_top - 1];
-                num_top--;
-                break;
-              case TK_OR:
-                num_stack[num_top - 1] =
-                    num_stack[num_top] || num_stack[num_top - 1];
-                num_top--;
-                break;
-              case TK_LS:
-                num_stack[num_top - 1] = num_stack[num_top]
-                                         << num_stack[num_top - 1];
-                num_top--;
-                break;
-              case TK_RS:
-                num_stack[num_top - 1] =
-                    num_stack[num_top] >> num_stack[num_top - 1];
-                num_top--;
-                break;
-              case TK_LEQ:
-                num_stack[num_top - 1] =
-                    num_stack[num_top] <= num_stack[num_top - 1];
-                num_top--;
-                break;
-              case TK_GEQ:
-                num_stack[num_top - 1] =
-                    num_stack[num_top] >= num_stack[num_top - 1];
-                num_top--;
-                break;
-              case TK_NEG:
-                num_stack[num_top] = -num_stack[num_top];
-                break;
-              case TK_DEREF:
-                num_stack[num_top] = paddr_read(num_stack[num_top], 4);
-                break;
-              default:
-                *success = false;
-                return 0;
-              }
+            case '-':
+              num_stack[num_top - 1] =
+                  num_stack[num_top] - num_stack[num_top - 1];
+              num_top--;
+              break;
+            case '*':
+              num_stack[num_top - 1] =
+                  num_stack[num_top] * num_stack[num_top - 1];
+              num_top--;
+              break;
+            case '/':
+              num_stack[num_top - 1] =
+                  num_stack[num_top] / num_stack[num_top - 1];
+              num_top--;
+              break;
+            case '<':
+              num_stack[num_top - 1] =
+                  num_stack[num_top] < num_stack[num_top - 1];
+              num_top--;
+              break;
+            case '>':
+              num_stack[num_top - 1] =
+                  num_stack[num_top] > num_stack[num_top - 1];
+              num_top--;
+              break;
+            case TK_EQ:
+              num_stack[num_top - 1] =
+                  num_stack[num_top] == num_stack[num_top - 1];
+              num_top--;
+              break;
+            case TK_NEQ:
+              num_stack[num_top - 1] =
+                  num_stack[num_top] != num_stack[num_top - 1];
+              num_top--;
+              break;
+            case TK_AND:
+              num_stack[num_top - 1] =
+                  num_stack[num_top] && num_stack[num_top - 1];
+              num_top--;
+              break;
+            case TK_OR:
+              num_stack[num_top - 1] =
+                  num_stack[num_top] || num_stack[num_top - 1];
+              num_top--;
+              break;
+            case TK_LS:
+              num_stack[num_top - 1] = num_stack[num_top]
+                                       << num_stack[num_top - 1];
+              num_top--;
+              break;
+            case TK_RS:
+              num_stack[num_top - 1] =
+                  num_stack[num_top] >> num_stack[num_top - 1];
+              num_top--;
+              break;
+            case TK_LEQ:
+              num_stack[num_top - 1] =
+                  num_stack[num_top] <= num_stack[num_top - 1];
+              num_top--;
+              break;
+            case TK_GEQ:
+              num_stack[num_top - 1] =
+                  num_stack[num_top] >= num_stack[num_top - 1];
+              num_top--;
+              break;
+            case TK_NEG:
+              num_stack[num_top] = -num_stack[num_top];
+              break;
+            case TK_DEREF:
+              num_stack[num_top] = paddr_read(num_stack[num_top], 4);
+              break;
+            default:
+              *success = false;
+              return 0;
             }
           }
-          if (tokens[i].type != ')' && tokens[i].type != TK_NOTYPE) {
-            op_stack[++op_top] = tokens[i];
-          }
+        }
+        if (tokens[i].type != ')' && tokens[i].type != TK_NOTYPE) {
+          op_stack[++op_top] = tokens[i];
         }
       }
     }
-    if (op_top != 0) {
-      *success = false;
-      return 0;
-    }
-    return num_stack[0];
   }
+  if (op_top != 0) {
+    *success = false;
+    return 0;
+  }
+  *success = true;
+  return num_stack[0];
 }
 
 uint32_t expr(char *e, bool *success) {
