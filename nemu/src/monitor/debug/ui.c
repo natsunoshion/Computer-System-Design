@@ -72,6 +72,7 @@ static int cmd_info(char *args) {
     for (int i = 0; i < 8; i++) {
       printf("%s: 0x%x\n", regsl[i], reg_l(i)); // 16进制
     }
+    printf("eip: 0x%x\n", cpu.eip); // eip
 
     // 16bit
     for (int i = 0; i < 8; i++) {
@@ -82,7 +83,6 @@ static int cmd_info(char *args) {
     for (int i = 0; i < 8; i++) {
       printf("%s: 0x%x\n", regsb[i], reg_b(i));
     }
-    printf("eip: 0x%x\n", cpu.eip); // eip
   } else if (watchpoint) {
     // 监视点
     print_wp();
