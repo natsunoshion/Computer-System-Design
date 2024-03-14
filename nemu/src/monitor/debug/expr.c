@@ -47,16 +47,11 @@ static struct rule {
     {"\\/", '/'},      // div
     {"\\(", '('},      // lparen
     {"\\)", ')'},      // rparen
+    {"!", '!'},        // not
     {"==", TK_EQ},     // equal
     {"!=", TK_NEQ},    // not equal
     {"&&", TK_AND},    // and
     {"\\|\\|", TK_OR}, // or
-    {">>", TK_RS},     // right shift
-    {"<<", TK_LS},     // left shift
-    {"<=", TK_LEQ},    // less equal
-    {">=", TK_GEQ},    // great equal
-    {"<", '<'},        // less
-    {">", '>'}         // great
 };
 
 #define NR_REGEX (sizeof(rules) / sizeof(rules[0]))
