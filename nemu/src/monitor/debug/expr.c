@@ -47,9 +47,9 @@ static struct rule {
     {"\\/", '/'},      // div
     {"\\(", '('},      // lparen
     {"\\)", ')'},      // rparen
-    {"!", '!'},        // not
     {"==", TK_EQ},     // equal
     {"!=", TK_NEQ},    // not equal
+    {"!", '!'},        // not
     {"&&", TK_AND},    // and
     {"\\|\\|", TK_OR}, // or
 };
