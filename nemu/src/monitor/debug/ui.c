@@ -108,12 +108,12 @@ static int cmd_x(char *args) {
     printf("参数非法！\n");
     return 0;
   }
-  int num_bytes = atoi(strtok(args, " ")); // 要检查的字节数
-  vaddr_t memory_address;                  // 开始检查的内存地址
+  int N = atoi(strtok(args, " ")); // 要检查的字节数
+  vaddr_t memory_address;          // 开始检查的内存地址
   // char *num_bytes_str = strtok(args, " ");
   char *address_str = strtok(NULL, " ");
 
-  if (sscanf(args, "%d 0x%x", &num_bytes, &memory_address) <= 0) {
+  if (sscanf(args, "%d 0x%x", &N, &memory_address) <= 0) {
     printf("参数非法！\n");
     return 0;
   }
@@ -125,16 +125,11 @@ static int cmd_x(char *args) {
     printf("表达式语法错误！\n");
     return 0;
   }
-  printf("0x%x后%d个4字节的内存：", memory_address, num_bytes);
-  for (int i = 0; i < num_bytes; i++) {
-    // 每4个字节换行打印，易于观察
-    if (i % 4) {
-      printf("  0x%02x",
-             vaddr_read(memory_address + i, 1)); // 读取并打印一个字节
-    } else {
-      printf("\n0x%x:  0x%02x", memory_address + i,
-             vaddr_read(memory_address + i, 1)); // 新行开始时打印地址
-    }
+  printf("0x%x后%d个4字节的内存：\n", memory_address, N);
+  for (int i = 0; i < N; i++) {
+    uint32_t value = paddr_read(memory_address, 4);
+    printf("0x%x : 0x%08x\n", memory_address, value);
+    memory_address += 4;
   }
   printf("\n");
 
