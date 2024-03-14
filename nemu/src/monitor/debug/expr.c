@@ -187,6 +187,7 @@ int get_operator_priority(int type) {
     return 5;
   default:
     // return 0; // 未知运算符给予最低优先级
+    printf("%d", type);
     assert(0);
   }
 }
