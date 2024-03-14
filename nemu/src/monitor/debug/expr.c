@@ -225,7 +225,7 @@ int eval(int start, int end, bool *success) {
   }
   // 只有一个标记
   if (start == end) {
-    printf("debug");
+    printf("%d %s\n", tokens[start].type, tokens[start].str);
     return get_token_value(tokens[start]);
   } else {
     tokens[++end].type = TK_NOTYPE; // 在末尾添加一个无类型标记
