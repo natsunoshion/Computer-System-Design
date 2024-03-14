@@ -115,6 +115,13 @@ static bool make_token(char *e) {
         switch (rules[i].token_type) {
         case TK_NOTYPE:
           break;
+        case TK_REG: {
+          // 寄存器跳过$
+          // 使用strncpy来复制字符串，同时确保字符串以'\0'结尾
+          strncpy(tokens[nr_token].str, substr_start + 1, substr_len - 1);
+          tokens[nr_token].str[substr_len - 1] = '\0';
+          break;
+        }
         default:
           // 缓冲区大小设置为32
           if (substr_len >= 32) {
