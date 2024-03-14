@@ -209,7 +209,34 @@ int get_domi_oper(int p, int q) {
       continue; // 在括号中的运算符不考虑
     }
 
-    int token_prior = get_operator_priority(tokens[i].type); // 获取运算符优先级
+    int token_prior = 0; // 当前运算符的优先级
+
+    // 判断运算符优先级
+    switch (tokens[i].type) {
+    case TK_NEG:   // 单目负号
+    case TK_DEREF: // 解引用
+    case '!':      // 逻辑非
+      token_prior = 1;
+      break;
+    case '*': // 乘法
+    case '/': // 除法
+      token_prior = 2;
+      break;
+    case '+': // 加法
+    case '-': // 减法
+      token_prior = 3;
+      break;
+    case TK_EQ:  // 等于
+    case TK_NEQ: // 不等于
+      token_prior = 4;
+      break;
+    case TK_AND: // 逻辑与
+    case TK_OR:  // 逻辑或
+      token_prior = 5;
+      break;
+    default: // 其他情况不修改优先级
+      break;
+    }
 
     // 更新最大优先级的运算符位置
     if (token_prior >= prior) {
