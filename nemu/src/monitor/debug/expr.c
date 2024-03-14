@@ -120,6 +120,7 @@ static bool make_token(char *e) {
           // 使用strncpy来复制字符串，同时确保字符串以'\0'结尾
           strncpy(tokens[nr_token].str, substr_start + 1, substr_len - 1);
           tokens[nr_token].str[substr_len - 1] = '\0';
+          tokens[nr_token++].type = rules[i].token_type;
           break;
         }
         default:
