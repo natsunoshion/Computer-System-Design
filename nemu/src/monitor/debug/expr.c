@@ -140,7 +140,221 @@ static bool make_token(char *e) {
   return true;
 }
 
-int eval(int p, int q, bool *success) { return 0; }
+int get_operator_priority(int type) {
+  switch (type) {
+  case TK_NOTYPE:
+  case ')':
+    return 0;
+  case TK_OR:
+    return 1;
+  case TK_AND:
+    return 2;
+  case TK_EQ:
+  case TK_NEQ:
+    return 3;
+  case '<':
+  case '>':
+  case TK_LEQ:
+  case TK_GEQ:
+    return 4;
+  case TK_LS:
+  case TK_RS:
+    return 5;
+  case '+':
+  case '-':
+    return 6;
+  case '*':
+  case '/':
+    return 7;
+  case TK_NEG:
+  case TK_DEREF:
+    return 8;
+  case '(':
+    return 9;
+  default:
+    printf("未知的操作符类型！\n");
+    assert(0);
+  }
+}
+
+bool is_number_token(int type) {
+  return type == TK_DEC || type == TK_HEX || type == TK_REG;
+}
+
+int get_token_value(Token token) {
+  int ret_value = 0;
+  switch (token.type) {
+  case TK_DEC:
+    sscanf(token.str, "%d", &ret_value);
+    break;
+  case TK_HEX:
+    sscanf(token.str, "%x", &ret_value);
+    break;
+  case TK_REG: {
+    char reg[4] = {0};
+    sscanf(token.str, "$%s", reg);
+    for (int i = 0; i < 8; i++) {
+      if (strcasecmp(reg, regsl[i]) == 0) {
+        return cpu.gpr[i]._32;
+      } else if (strcasecmp(reg, regsw[i]) == 0) {
+        return cpu.gpr[i]._16;
+      } else if (strcasecmp(reg, regsb[i]) == 0) {
+        return cpu.gpr[i % 4]._8[i / 4];
+      } else if (strcasecmp(reg, "eip") == 0) {
+        return cpu.eip;
+      }
+    }
+    printf("非法寄存器！\n");
+    assert(0);
+    break;
+  }
+  default:
+    printf("非法的值标记！\n");
+    assert(0);
+    break;
+  }
+  return ret_value;
+}
+
+int eval(int start, int end, bool *success) {
+  // 若起点大于终点，表达式错误
+  if (start > end) {
+    printf("Bad Expression!\n");
+    *success = false;
+    return 0;
+  }
+  // 只有一个标记
+  if (start == end) {
+    return get_token_value(tokens[start]);
+  } else {
+    tokens[++end].type = TK_NOTYPE; // 在末尾添加一个无类型标记
+    // 操作数栈和操作符栈
+    int num_stack[32];
+    Token op_stack[32];
+    int num_top = -1, op_top = 0;
+    op_stack[0].type = TK_NOTYPE; // 操作符栈初始值
+    for (int i = start; i <= end; i++) {
+      // 若标记是数字，则压入操作数栈
+      if (is_number_token(tokens[i].type)) {
+        num_stack[++num_top] = get_token_value(tokens[i]);
+      }
+      // 若标记是操作符
+      else {
+        // 检查栈顶操作符优先级
+        // 如果当前操作符优先级大于栈顶操作符，则压入操作符栈
+        if (get_operator_priority(tokens[i].type) >
+            get_operator_priority(op_stack[op_top].type)) {
+          if (tokens[i].type == '(') {
+            op_stack[++op_top].type = ')';
+          } else {
+            op_stack[++op_top] = tokens[i];
+          }
+        }
+        // 否则，计算临时结果
+        else {
+          while (op_top != 0 &&
+                 get_operator_priority(tokens[i].type) <=
+                     get_operator_priority(op_stack[op_top].type)) {
+            if (op_stack[op_top].type == ')') {
+              op_top--;
+              break;
+            } else {
+              switch (op_stack[op_top--].type) {
+              case '+':
+                num_stack[num_top - 1] =
+                    num_stack[num_top] + num_stack[num_top - 1];
+                num_top--;
+                break;
+              case '-':
+                num_stack[num_top - 1] =
+                    num_stack[num_top] - num_stack[num_top - 1];
+                num_top--;
+                break;
+              case '*':
+                num_stack[num_top - 1] =
+                    num_stack[num_top] * num_stack[num_top - 1];
+                num_top--;
+                break;
+              case '/':
+                num_stack[num_top - 1] =
+                    num_stack[num_top] / num_stack[num_top - 1];
+                num_top--;
+                break;
+              case '<':
+                num_stack[num_top - 1] =
+                    num_stack[num_top] < num_stack[num_top - 1];
+                num_top--;
+                break;
+              case '>':
+                num_stack[num_top - 1] =
+                    num_stack[num_top] > num_stack[num_top - 1];
+                num_top--;
+                break;
+              case TK_EQ:
+                num_stack[num_top - 1] =
+                    num_stack[num_top] == num_stack[num_top - 1];
+                num_top--;
+                break;
+              case TK_NEQ:
+                num_stack[num_top - 1] =
+                    num_stack[num_top] != num_stack[num_top - 1];
+                num_top--;
+                break;
+              case TK_AND:
+                num_stack[num_top - 1] =
+                    num_stack[num_top] && num_stack[num_top - 1];
+                num_top--;
+                break;
+              case TK_OR:
+                num_stack[num_top - 1] =
+                    num_stack[num_top] || num_stack[num_top - 1];
+                num_top--;
+                break;
+              case TK_LS:
+                num_stack[num_top - 1] = num_stack[num_top]
+                                         << num_stack[num_top - 1];
+                num_top--;
+                break;
+              case TK_RS:
+                num_stack[num_top - 1] =
+                    num_stack[num_top] >> num_stack[num_top - 1];
+                num_top--;
+                break;
+              case TK_LEQ:
+                num_stack[num_top - 1] =
+                    num_stack[num_top] <= num_stack[num_top - 1];
+                num_top--;
+                break;
+              case TK_GEQ:
+                num_stack[num_top - 1] =
+                    num_stack[num_top] >= num_stack[num_top - 1];
+                num_top--;
+                break;
+              case TK_NEG:
+                num_stack[num_top] = -num_stack[num_top];
+                break;
+              case TK_DEREF:
+                num_stack[num_top] = paddr_read(num_stack[num_top], 4);
+                break;
+              default:
+                *success = false;
+                return 0;
+              }
+            }
+          }
+          if (tokens[i].type != ')' && tokens[i].type != TK_NOTYPE) {
+            op_stack[++op_top] = tokens[i];
+          }
+        }
+      }
+    }
+    if (op_top != 0) {
+      *success = false;
+      return 0;
+    }
+    return num_stack[0];
+  }
+}
 
 uint32_t expr(char *e, bool *success) {
   if (!make_token(e)) {
