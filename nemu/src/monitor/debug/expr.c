@@ -168,55 +168,55 @@ int check_parentheses(int p, int q) {
 
 // 寻找主运算符
 int get_domi_oper(int p, int q) {
-  int pos = -1;  // 主运算符的位置
-  int level = 0; // 当前最大的运算符优先级
-  bool f = 1;    // 标记是否在括号内部，1表示不在，0表示在
+  int pos = -1;            // 主运算符的位置
+  int prior = 0;           // 当前最大的运算符优先级
+  bool in_parentheses = 1; // 标记是否在括号内部
 
   for (int i = p; i <= q; i++) {
     if (tokens[i].type == '(') {
-      f = 0; // 进入括号内部
+      in_parentheses = 0; // 进入括号内部
       continue;
     } else if (tokens[i].type == ')') {
-      f = 1; // 离开括号
+      in_parentheses = 1; // 离开括号
       continue;
     }
 
-    if (!f) {
+    if (!in_parentheses) {
       continue; // 在括号中的运算符不考虑
     }
 
-    int token_level = 0; // 当前运算符的优先级
+    int token_prior = 0; // 当前运算符的优先级
 
     // 判断运算符优先级
     switch (tokens[i].type) {
     case TK_NEG:   // 单目负号
     case TK_DEREF: // 解引用
     case '!':      // 逻辑非
-      token_level = 1;
+      token_prior = 1;
       break;
     case '*': // 乘法
     case '/': // 除法
-      token_level = 2;
+      token_prior = 2;
       break;
     case '+': // 加法
     case '-': // 减法
-      token_level = 3;
+      token_prior = 3;
       break;
     case TK_EQ:  // 等于
     case TK_NEQ: // 不等于
-      token_level = 4;
+      token_prior = 4;
       break;
     case TK_AND: // 逻辑与
     case TK_OR:  // 逻辑或
-      token_level = 5;
+      token_prior = 5;
       break;
     default: // 其他情况不修改优先级
       break;
     }
 
     // 更新最大优先级的运算符位置
-    if (token_level >= level) {
-      level = token_level;
+    if (token_prior >= prior) {
+      prior = token_prior;
       pos = i;
     }
   }
@@ -224,7 +224,85 @@ int get_domi_oper(int p, int q) {
 }
 
 static int eval(int p, int q) { // 求值函数
-  return -1;
+  if (p > q) {
+    assert(0); // 当p>q时，断言失败
+  } else if (p == q) {
+    // 单一元素求值
+    int res;
+    switch (tokens[q].type) {
+    case TK_DEC:
+      sscanf(tokens[q].str, "%d", &res);
+      break;
+    case TK_HEX:
+      sscanf(tokens[q].str, "%x", &res);
+      break;
+    case TK_REG: {
+      // 对寄存器求值
+      if (strcmp(tokens[q].str, "eip") == 0) {
+        return cpu.eip;
+      }
+      for (int i = 0; i < 8; i++) {
+        if (strcmp(tokens[q].str, regsl[i]) == 0) {
+          return reg_l(i);
+        } else if (strcmp(tokens[q].str, regsw[i]) == 0) {
+          return reg_w(i);
+        } else if (strcmp(tokens[q].str, regsb[i]) == 0) {
+          return reg_b(i);
+        }
+      }
+      assert(0); // 未知寄存器
+      break;
+    }
+    default:
+      assert(0); // 未知类型
+    }
+    return res;
+  } else if (check_parentheses(p, q) == 1) {
+    // 去除边缘括号
+    return eval(p + 1, q - 1);
+  } else {
+    // 处理表达式
+    int pos = get_domi_oper(p, q);
+    int val1, val2;
+
+    if (tokens[pos].type == TK_NEG) {
+      return -eval(p + 1, q);
+    } else if (tokens[pos].type == TK_DEREF) {
+      int addr = eval(p + 1, q);
+      return vaddr_read(addr, 4);
+    } else if (tokens[pos].type == '!') {
+      return !eval(p + 1, q);
+    }
+
+    val1 = eval(p, pos - 1);
+    val2 = eval(pos + 1, q);
+
+    switch (tokens[pos].type) {
+    case '+':
+      return val1 + val2;
+    case '-':
+      return val1 - val2;
+    case '*':
+      return val1 * val2;
+    case '/':
+      if (val2 != 0) {
+        return val1 / val2;
+      } else {
+        assert(0); // 防止除以0
+      }
+    case TK_EQ:
+      return val1 == val2;
+    case TK_NEQ:
+      return val1 != val2;
+    case TK_AND:
+      return val1 && val2;
+    case TK_OR:
+      return val1 || val2;
+    default:
+      assert(0); // 未知运算符
+    }
+  }
+  return -1; // 表达式无法求值
 }
 
 uint32_t expr(char *e, bool *success) {
