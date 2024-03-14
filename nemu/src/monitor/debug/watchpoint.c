@@ -37,38 +37,35 @@ WP *new_wp() {
 }
 
 bool free_wp(int num) {
-  WP *curr = head;
+  WP *prev = NULL; // 前一个节点指针
+  WP *curr = head; // 当前节点指针
+
+  // 遍历查找编号匹配的监视点
   while (curr) {
     if (curr->NO == num) {
       break;
     }
-    curr = curr->next;
+    prev = curr;       // 更新前一个节点为当前节点
+    curr = curr->next; // 移动到下一个节点
   }
+
+  // 如果未找到，返回false
   if (curr == NULL) {
     return false;
   }
-  // 回收头节点
-  if (curr == head) {
-    head = head->next;
 
-    // 放进空闲链表
-    curr->next = free_;
-    free_ = curr;
+  // 如果目标监视点是头节点
+  if (curr == head) {
+    head = head->next; // 移动头指针
+  } else {
+    // 如果目标监视点是中间或尾节点
+    prev->next = curr->next; // 跳过当前节点
   }
-  // 回收中间节点
-  else {
-    curr = head;
-    while (curr->next) {
-      if (curr->next->NO == num) {
-        break;
-      }
-      curr = curr->next;
-    }
-    WP *temp = curr->next;
-    curr->next = temp->next;
-    temp->next = free_;
-    free_ = temp;
-  }
+
+  // 将回收的节点加入到空闲链表的头部
+  curr->next = free_;
+  free_ = curr;
+
   return true;
 }
 
