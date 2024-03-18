@@ -303,7 +303,8 @@ static int eval(int p, int q) { // 求值函数
       assert(0); // 未知运算符
     }
   }
-  assert(0); // 表达式无法求值
+  // 表达式无法求值
+  assert(0);
 }
 
 uint32_t expr(char *e, bool *success) {
