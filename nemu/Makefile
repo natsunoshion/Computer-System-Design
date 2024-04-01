@@ -29,7 +29,7 @@ $(OBJ_DIR)/%.o: src/%.c
 
 # Some convinient rules
 
-.PHONY: app run submit clean count
+.PHONY: app run submit clean
 app: $(BINARY)
 
 ARGS ?= -l $(BUILD_DIR)/nemu-log.txt
@@ -52,14 +52,3 @@ gdb: $(BINARY)
 
 clean: 
 	rm -rf $(BUILD_DIR)
-
-count:
-	@git checkout pa0
-	@echo "Counting lines of code in branch pa0..."
-	@PA0_COUNT=$$(find . -name "*.[ch]" -not -path "./nemu/Makefile" | xargs cat | wc -l) ; \
-	git checkout pa1 ; \
-	echo "Counting lines of code in branch pa1..." ; \
-	PA1_COUNT=$$(find . -name "*.[ch]" -not -path "./nemu/Makefile" | xargs cat | wc -l) ; \
-	echo "pa0: $$PA0_COUNT lines of code" ; \
-	echo "pa1: $$PA1_COUNT lines of code" ; \
-	echo "Code line difference (pa1 - pa0): $$(( $$PA1_COUNT - $$PA0_COUNT ))"

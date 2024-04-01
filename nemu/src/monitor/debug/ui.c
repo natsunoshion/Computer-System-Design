@@ -1,17 +1,16 @@
-#include "monitor/expr.h"
 #include "monitor/monitor.h"
+#include "monitor/expr.h"
 #include "monitor/watchpoint.h"
 #include "nemu.h"
 
-#include <readline/history.h>
-#include <readline/readline.h>
 #include <stdlib.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 void cpu_exec(uint64_t);
 
-/* We use the `readline' library to provide more flexibility to read from stdin.
- */
-char *rl_gets() {
+/* We use the `readline' library to provide more flexibility to read from stdin. */
+char* rl_gets() {
   static char *line_read = NULL;
 
   if (line_read) {
@@ -33,156 +32,33 @@ static int cmd_c(char *args) {
   return 0;
 }
 
-static int cmd_q(char *args) { return -1; }
+static int cmd_q(char *args) {
+  return -1;
+}
 
 static int cmd_help(char *args);
-
-static int cmd_si(char *args) {
-  // 步数默认为1
-  uint64_t N = 1;
-
-  // 如果有参数，那就把步数拷贝到NN
-  if (args != NULL) {
-    if (sscanf(args, "%llu", &N) <= 0) {
-      printf("参数非法！\n");
-      return 0;
-    }
-  }
-
-  // 调用api执行N步
-  cpu_exec(N);
-  return 0;
-}
-
-static int cmd_info(char *args) {
-  char SUBCMD;
-  if (args == NULL || sscanf(args, "%c", &SUBCMD) <= 0) {
-    printf("参数非法！\n");
-    return 0;
-  }
-  bool reg = SUBCMD == 'r';
-  bool watchpoint = SUBCMD == 'w';
-  if (!reg && !watchpoint) {
-    printf("参数非法！\n");
-    return 0;
-  }
-  if (reg) {
-    // 寄存器
-    // 32bit
-    for (int i = 0; i < 8; i++) {
-      printf("%s: 0x%x\n", regsl[i], reg_l(i)); // 16进制
-    }
-    printf("eip: 0x%x\n", cpu.eip); // eip
-
-    // 16bit
-    for (int i = 0; i < 8; i++) {
-      printf("%s: 0x%x\n", regsw[i], reg_w(i));
-    }
-
-    // 8bit
-    for (int i = 0; i < 8; i++) {
-      printf("%s: 0x%x\n", regsb[i], reg_b(i));
-    }
-  } else if (watchpoint) {
-    // 监视点
-    print_wp();
-  }
-  return 0;
-}
-
-static int cmd_p(char *args) {
-  bool ok;
-  int value = expr(args, &ok);
-
-  if (ok) {
-    printf("%d\n", value);
-  } else {
-    printf("语法错误！\n");
-  }
-
-  return 0;
-}
-
-static int cmd_x(char *args) {
-  if (args == NULL) {
-    printf("参数非法！\n");
-    return 0;
-  }
-  int N = atoi(strtok(args, " ")); // 要检查的字节数
-  vaddr_t memory_address;          // 开始检查的内存地址
-  // char *num_bytes_str = strtok(args, " ");
-  char *address_str = strtok(NULL, " ");
-
-  if (sscanf(args, "%d 0x%x", &N, &memory_address) <= 0) {
-    printf("参数非法！\n");
-    return 0;
-  }
-
-  bool valid_expr;
-  memory_address =
-      expr(address_str, &valid_expr); // 计算表达式的值来获取内存地址
-  if (!valid_expr) {
-    printf("表达式语法错误！\n");
-    return 0;
-  }
-  printf("0x%x后%d个4字节的内存：\n", memory_address, N);
-  for (int i = 0; i < N; i++) {
-    uint32_t value = paddr_read(memory_address, 4);
-    printf("0x%x : 0x%08x\n", memory_address, value);
-    memory_address += 4;
-  }
-  printf("\n");
-
-  return 0;
-}
-
-static int cmd_w(char *args) {
-  bool ok;
-  WP *wp = new_wp();
-  strcpy(wp->expr, args);
-  wp->value = expr(args, &ok);
-  if (!ok) {
-    printf("表达式语法错误！\n");
-    return 0;
-  } else {
-    printf("成功将%s设置到%d号监视点\n", args, wp->NO);
-  }
-  return 0;
-}
-
-static int cmd_d(char *args) {
-  int num = 0;
-  if (sscanf(args, "%d", &num) <= 0) {
-    printf("参数非法！\n");
-    return 0;
-  }
-
-  if (free_wp(num)) {
-    printf("成功删除监视点%d\n", num);
-  } else {
-    printf("无法找到监视点%d！\n", num);
-  }
-  return 0;
-}
+static int cmd_si(char *args);
+static int cmd_info(char *args);
+static int cmd_p(char* args);
+static int cmd_x(char* args);
+static int cmd_w(char* args);
+static int cmd_d(char* args);
 
 static struct {
   char *name;
   char *description;
-  int (*handler)(char *);
-} cmd_table[] = {
-    {"help", "Display informations about all supported commands", cmd_help},
-    {"c", "Continue the execution of the program", cmd_c},
-    {"q", "Exit NEMU", cmd_q},
-    {"si", "si [N]：单步执行N条指令，N可省，默认执行一条", cmd_si},
-    {"info", "info r：打印寄存器状态\n       info w：打印监视点信息", cmd_info},
-    {"p", "p EXPR：求出表达式EXPR（基础算术运算）的值", cmd_p},
-    {"x",
-     "x N EXPR：扫描内存，即求出EXPR的值，然后从EXPR地址上输出N个4字节数据",
-     cmd_x},
-    {"w", "w EXPR：当EXPR的值发生变化时，暂停程序", cmd_w},
-    {"d", "d N：删除N号监视点", cmd_d},
-
-    /* TODO: Add more commands */
+  int (*handler) (char *);
+} cmd_table [] = {
+  { "help", "Display informations about all supported commands", cmd_help },
+  { "c", "Continue the execution of the program", cmd_c },
+  { "q", "Exit NEMU", cmd_q },
+  { "si", "Step to the next instruction", cmd_si},
+  { "info", "Print state of regs using 'r' or watchpoint using 'w'", cmd_info},
+  { "p", "Calculate the result of target experssion", cmd_p},
+  { "x", "Scan the target address of memory and show the value in the address", cmd_x},
+  { "w", "Set watchpoint", cmd_w},
+  { "d", "Delete watchpoint", cmd_d}
+  /* TODO: Add more commands */
 
 };
 
@@ -195,11 +71,12 @@ static int cmd_help(char *args) {
 
   if (arg == NULL) {
     /* no argument given */
-    for (i = 0; i < NR_CMD; i++) {
+    for (i = 0; i < NR_CMD; i ++) {
       printf("%s - %s\n", cmd_table[i].name, cmd_table[i].description);
     }
-  } else {
-    for (i = 0; i < NR_CMD; i++) {
+  }
+  else {
+    for (i = 0; i < NR_CMD; i ++) {
       if (strcmp(arg, cmd_table[i].name) == 0) {
         printf("%s - %s\n", cmd_table[i].name, cmd_table[i].description);
         return 0;
@@ -207,6 +84,98 @@ static int cmd_help(char *args) {
     }
     printf("Unknown command '%s'\n", arg);
   }
+  return 0;
+}
+
+static int cmd_si(char *args) {
+  int steps = strtok(args, " ") == NULL ? 1 : atoi(strtok(args, " "));
+  cpu_exec(steps);
+  return 0;
+}
+
+static int cmd_info(char *args) {
+  char* subcmd = strtok(args, " ");
+  if(subcmd == NULL) {
+    printf("Please input subcmd to show information\n");
+  }
+  else {
+    if(strcmp(subcmd, "r") == 0) {
+      for(int i = 0; i < 8; i++) {
+        printf("%s : 0x%x\n", reg_name(i, 4), reg_l(i));
+      }
+    }
+    else if(strcmp(subcmd, "w") == 0) {
+      show_wp();
+    }
+    else {
+      printf("Undefined subcmd\n");
+    }
+  }
+  return 0;
+}
+
+static int cmd_p(char* args) {
+  char* expression = strtok(args, " ");
+  bool success = true;
+  int value = expr(expression, &success);
+  if(success) {
+    printf("ans = 0x%08x\n", value);
+  }
+  else {
+    printf("Illegal Expression!\n");
+  }
+  return 0;
+}
+
+static int cmd_x(char* args) {
+  char* arg1 = strtok(args, " ");
+  if(arg1 == NULL) {
+    printf("Pleas input N for continuous n address\n");
+    return 0;
+  }
+  int n = atoi(arg1);
+  char* arg2 = args + strlen(arg1) + 1;
+  arg2 = strtok(arg2, " ");
+  if(arg2 == NULL) {
+    printf("Pleas input Expr for beginning address\n");
+    return 0;
+  }
+  bool success = true;
+  int begin_address = expr(arg2, &success);
+  if(success) {
+    begin_address = strtoul(arg2, NULL, 16);
+  }
+  else {
+    printf("Illegal Addrerss Expression!\n");
+  }
+  for(int i = 0; i < n; i++) {
+    uint32_t value = paddr_read(begin_address, 4);
+    printf("0x%x : 0x%08x\n", begin_address, value);
+    begin_address += 4;
+  }
+  return 0;
+}
+
+static int cmd_w(char* args) {
+  WP* wp = new_wp();
+  char* arg = strtok(NULL, "\n");
+  strcpy(wp->expr, arg);
+  bool success = true;
+  wp->value = expr(arg, &success);
+  if(success){
+    printf("watchpoint %d : %s\n", wp->NO, wp->expr);
+  }
+  else{
+    printf("Illegal Expression!\n");
+    free_wp(wp->NO);
+  }
+  return 0;
+}
+
+static int cmd_d(char* args) {
+  char* arg = strtok(NULL, "\n");
+  int no = atoi(arg);
+  free_wp(no);
   return 0;
 }
 
@@ -222,9 +191,7 @@ void ui_mainloop(int is_batch_mode) {
 
     /* extract the first token as the command */
     char *cmd = strtok(str, " ");
-    if (cmd == NULL) {
-      continue;
-    }
+    if (cmd == NULL) { continue; }
 
     /* treat the remaining string as the arguments,
      * which may need further parsing
@@ -240,17 +207,13 @@ void ui_mainloop(int is_batch_mode) {
 #endif
 
     int i;
-    for (i = 0; i < NR_CMD; i++) {
+    for (i = 0; i < NR_CMD; i ++) {
       if (strcmp(cmd, cmd_table[i].name) == 0) {
-        if (cmd_table[i].handler(args) < 0) {
-          return;
-        }
+        if (cmd_table[i].handler(args) < 0) { return; }
         break;
       }
     }
 
-    if (i == NR_CMD) {
-      printf("Unknown command '%s'\n", cmd);
-    }
+    if (i == NR_CMD) { printf("Unknown command '%s'\n", cmd); }
   }
 }
