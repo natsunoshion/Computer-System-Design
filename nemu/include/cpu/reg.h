@@ -15,7 +15,7 @@ enum { R_AL, R_CL, R_DL, R_BL, R_AH, R_CH, R_DH, R_BH };
  */
 
 typedef struct {
-  union {  
+  union {
     union {
       uint32_t _32;
       uint16_t _16;
@@ -25,8 +25,8 @@ typedef struct {
     /* Do NOT change the order of the GPRs' definitions. */
 
     /* In NEMU, rtlreg_t is exactly uint32_t. This makes RTL instructions
-    * in PA2 able to directly access these registers.
-    */
+     * in PA2 able to directly access these registers.
+     */
     struct {
       rtlreg_t eax, ecx, edx, ebx, esp, ebp, esi, edi;
     };
@@ -36,15 +36,15 @@ typedef struct {
   union {
     uint32_t val;
     struct {
-      uint32_t CF:1;
-      unsigned:5;
-      uint32_t ZF:1;
-      uint32_t SF:1;
-      unsigned:1;
-      uint32_t IF:1;
-      unsigned:1;
-      uint32_t OF:1;
-      unsigned:20;
+      uint32_t CF : 1;
+      unsigned : 5;
+      uint32_t ZF : 1;
+      uint32_t SF : 1;
+      unsigned : 1;
+      uint32_t IF : 1;
+      unsigned : 1;
+      uint32_t OF : 1;
+      unsigned : 20;
     };
   } eflags;
 
@@ -61,17 +61,21 @@ static inline int check_reg_index(int index) {
 #define reg_w(index) (cpu.gpr[check_reg_index(index)]._16)
 #define reg_b(index) (cpu.gpr[check_reg_index(index) & 0x3]._8[index >> 2])
 
-extern const char* regsl[];
-extern const char* regsw[];
-extern const char* regsb[];
+extern const char *regsl[];
+extern const char *regsw[];
+extern const char *regsb[];
 
-static inline const char* reg_name(int index, int width) {
+static inline const char *reg_name(int index, int width) {
   assert(index >= 0 && index < 8);
   switch (width) {
-    case 4: return regsl[index];
-    case 1: return regsb[index];
-    case 2: return regsw[index];
-    default: assert(0);
+  case 4:
+    return regsl[index];
+  case 1:
+    return regsb[index];
+  case 2:
+    return regsw[index];
+  default:
+    assert(0);
   }
 }
 
