@@ -31,16 +31,16 @@ make_EHelper(call) {
   print_asm("call %x", decoding.jmp_eip);
 }
 
-make_EHelper(call_rm) {
-  rtl_push(eip);
-  decoding.jmp_eip = id_dest->val;
-  decoding.is_jmp = 1;
-  print_asm("call *%s", id_dest->str);
-}
-
 make_EHelper(ret) {
   // only need to pop eip and set jump flag
   rtl_pop(&decoding.jmp_eip);
   decoding.is_jmp = 1;
   print_asm("ret");
+}
+
+make_EHelper(call_rm) {
+  rtl_push(eip);
+  decoding.jmp_eip = id_dest->val;
+  decoding.is_jmp = 1;
+  print_asm("call *%s", id_dest->str);
 }
