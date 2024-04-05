@@ -24,7 +24,7 @@ typedef struct {
 
 typedef struct {
   uint32_t opcode;
-  vaddr_t seq_eip;  // sequential eip
+  vaddr_t seq_eip; // sequential eip
   bool is_operand_size_16;
   uint8_t ext_opcode;
   bool is_jmp;
@@ -39,22 +39,22 @@ typedef struct {
 
 typedef union {
   struct {
-    uint8_t R_M		:3;
-    uint8_t reg		:3;
-    uint8_t mod		:2;
+    uint8_t R_M : 3;
+    uint8_t reg : 3;
+    uint8_t mod : 2;
   };
   struct {
-    uint8_t dont_care	:3;
-    uint8_t opcode		:3;
+    uint8_t dont_care : 3;
+    uint8_t opcode : 3;
   };
   uint8_t val;
 } ModR_M;
 
 typedef union {
   struct {
-    uint8_t base	:3;
-    uint8_t index	:3;
-    uint8_t ss		:2;
+    uint8_t base : 3;
+    uint8_t index : 3;
+    uint8_t ss : 2;
   };
   uint8_t val;
 } SIB;
@@ -71,8 +71,8 @@ extern DecodeInfo decoding;
 #define id_src2 (&decoding.src2)
 #define id_dest (&decoding.dest)
 
-#define make_DHelper(name) void concat(decode_, name) (vaddr_t *eip)
-typedef void (*DHelper) (vaddr_t *);
+#define make_DHelper(name) void concat(decode_, name)(vaddr_t * eip)
+typedef void (*DHelper)(vaddr_t *);
 
 make_DHelper(I2E);
 make_DHelper(I2a);
