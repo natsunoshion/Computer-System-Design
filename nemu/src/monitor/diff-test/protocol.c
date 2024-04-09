@@ -35,7 +35,6 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-
 #include "protocol.h"
 
 struct gdb_conn {
@@ -44,9 +43,7 @@ struct gdb_conn {
   bool ack;
 };
 
-
-static uint8_t
-hex_nibble(uint8_t hex) {
+static uint8_t hex_nibble(uint8_t hex) {
   return isdigit(hex) ? hex - '0' : tolower(hex) - 'a' + 10;
 }
 
@@ -71,8 +68,7 @@ uint64_t gdb_decode_hex_str(uint8_t *bytes) {
   return value;
 }
 
-
-static struct gdb_conn* gdb_begin(int fd) {
+static struct gdb_conn *gdb_begin(int fd) {
   struct gdb_conn *conn = calloc(1, sizeof(struct gdb_conn *));
   if (conn == NULL)
     err(1, "calloc");
@@ -101,11 +97,11 @@ static struct gdb_conn* gdb_begin(int fd) {
   return conn;
 }
 
-struct gdb_conn* gdb_begin_inet(const char *addr, uint16_t port) {
+struct gdb_conn *gdb_begin_inet(const char *addr, uint16_t port) {
   // fill the socket information
   struct sockaddr_in sa = {
-    .sin_family = AF_INET,
-    .sin_port = htons(port),
+      .sin_family = AF_INET,
+      .sin_port = htons(port),
   };
   if (inet_aton(addr, &sa.sin_addr) == 0)
     errx(1, "Invalid address: %s", addr);
@@ -137,7 +133,6 @@ struct gdb_conn* gdb_begin_inet(const char *addr, uint16_t port) {
   return gdb_begin(fd);
 }
 
-
 void gdb_end(struct gdb_conn *conn) {
   fclose(conn->in);
   fclose(conn->out);
@@ -155,9 +150,9 @@ static void send_packet(FILE *out, const uint8_t *command, size_t size) {
   // gdbserver.  e.g. giving "invalid hex digit" on an RLE'd address.
   // So just write raw here, and maybe let higher levels escape/RLE.
 
-  fputc('$', out); // packet start
+  fputc('$', out);               // packet start
   fwrite(command, 1, size, out); // payload
-  fprintf(out, "#%02X", sum); // packet end, checksum
+  fprintf(out, "#%02X", sum);    // packet end, checksum
   fflush(out);
 
   if (ferror(out))
@@ -179,7 +174,7 @@ void gdb_send(struct gdb_conn *conn, const uint8_t *command, size_t size) {
   } while (!acked);
 }
 
-static uint8_t* recv_packet(FILE *in, size_t *ret_size, bool* ret_sum_ok) {
+static uint8_t *recv_packet(FILE *in, size_t *ret_size, bool *ret_sum_ok) {
   size_t i = 0;
   size_t size = 4096;
   uint8_t *reply = malloc(size);
@@ -191,69 +186,70 @@ static uint8_t* recv_packet(FILE *in, size_t *ret_size, bool* ret_sum_ok) {
   bool escape = false;
 
   // fast-forward to the first start of packet
-  while ((c = fgetc(in)) != EOF && c != '$');
+  while ((c = fgetc(in)) != EOF && c != '$')
+    ;
 
   while ((c = fgetc(in)) != EOF) {
     sum += c;
     switch (c) {
-      case '$': // new packet?  start over...
-        i = 0;
-        sum = 0;
-        escape = false;
-        continue;
+    case '$': // new packet?  start over...
+      i = 0;
+      sum = 0;
+      escape = false;
+      continue;
 
-      case '#': // end of packet
-        sum -= c; // not part of the checksum
-        {
-          uint8_t msb = fgetc(in);
-          uint8_t lsb = fgetc(in);
-          *ret_sum_ok = sum == gdb_decode_hex(msb, lsb);
-        }
-        *ret_size = i;
+    case '#':   // end of packet
+      sum -= c; // not part of the checksum
+      {
+        uint8_t msb = fgetc(in);
+        uint8_t lsb = fgetc(in);
+        *ret_sum_ok = sum == gdb_decode_hex(msb, lsb);
+      }
+      *ret_size = i;
 
-        // terminate it for good measure
-        if (i == size) {
-          reply = realloc(reply, size + 1);
-          if (reply == NULL)
-            err(1, "realloc");
-        }
-        reply[i] = '\0';
+      // terminate it for good measure
+      if (i == size) {
+        reply = realloc(reply, size + 1);
+        if (reply == NULL)
+          err(1, "realloc");
+      }
+      reply[i] = '\0';
 
-        return reply;
+      return reply;
 
-      case '}': // escape: next char is XOR 0x20
-        escape = true;
-        continue;
+    case '}': // escape: next char is XOR 0x20
+      escape = true;
+      continue;
 
-      case '*': // run-length-encoding
-        // The next character tells how many times to repeat the last
-        // character we saw.  The count is added to 29, so that the
-        // minimum-beneficial RLE 3 is the first printable character ' '.
-        // The count character can't be >126 or '$'/'#' packet markers.
+    case '*': // run-length-encoding
+      // The next character tells how many times to repeat the last
+      // character we saw.  The count is added to 29, so that the
+      // minimum-beneficial RLE 3 is the first printable character ' '.
+      // The count character can't be >126 or '$'/'#' packet markers.
 
-        if (i > 0) { // need something to repeat!
-          int c2 = fgetc(in);
-          if (c2 < 29 || c2 > 126 || c2 == '$' || c2 == '#') {
-            // invalid count character!
-            ungetc(c2, in);
-          } else {
-            int count = c2 - 29;
+      if (i > 0) { // need something to repeat!
+        int c2 = fgetc(in);
+        if (c2 < 29 || c2 > 126 || c2 == '$' || c2 == '#') {
+          // invalid count character!
+          ungetc(c2, in);
+        } else {
+          int count = c2 - 29;
 
-            // get a bigger buffer if needed
-            if (i + count > size) {
-              size *= 2;
-              reply = realloc(reply, size);
-              if (reply == NULL)
-                err(1, "realloc");
-            }
-
-            // fill the repeated character
-            memset(&reply[i], reply[i - 1], count);
-            i += count;
-            sum += c2;
-            continue;
+          // get a bigger buffer if needed
+          if (i + count > size) {
+            size *= 2;
+            reply = realloc(reply, size);
+            if (reply == NULL)
+              err(1, "realloc");
           }
+
+          // fill the repeated character
+          memset(&reply[i], reply[i - 1], count);
+          i += count;
+          sum += c2;
+          continue;
         }
+      }
     }
 
     // XOR an escaped character
@@ -282,7 +278,7 @@ static uint8_t* recv_packet(FILE *in, size_t *ret_size, bool* ret_sum_ok) {
     errx(1, "recv: Unknown connection error");
 }
 
-uint8_t* gdb_recv(struct gdb_conn *conn, size_t *size) {
+uint8_t *gdb_recv(struct gdb_conn *conn, size_t *size) {
   uint8_t *reply;
   bool acked = false;
   do {
@@ -299,13 +295,13 @@ uint8_t* gdb_recv(struct gdb_conn *conn, size_t *size) {
   return reply;
 }
 
-const char* gdb_start_noack(struct gdb_conn *conn) {
+const char *gdb_start_noack(struct gdb_conn *conn) {
   static const char cmd[] = "QStartNoAckMode";
   gdb_send(conn, (const uint8_t *)cmd, sizeof(cmd) - 1);
 
   size_t size;
   uint8_t *reply = gdb_recv(conn, &size);
-  bool ok = size == 2 && !strcmp((const char*)reply, "OK");
+  bool ok = size == 2 && !strcmp((const char *)reply, "OK");
   free(reply);
 
   if (ok)
