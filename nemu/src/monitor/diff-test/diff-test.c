@@ -1,8 +1,8 @@
-#include "nemu.h"
 #include "monitor/monitor.h"
-#include <unistd.h>
-#include <sys/prctl.h>
+#include "nemu.h"
 #include <signal.h>
+#include <sys/prctl.h>
+#include <unistd.h>
 
 #include "protocol.h"
 #include <stdlib.h>
@@ -20,48 +20,46 @@ static bool is_skip_nemu;
 void diff_test_skip_qemu() { is_skip_qemu = true; }
 void diff_test_skip_nemu() { is_skip_nemu = true; }
 
-#define regcpy_from_nemu(regs) \
-  do { \
-    regs.eax = cpu.eax; \
-    regs.ecx = cpu.ecx; \
-    regs.edx = cpu.edx; \
-    regs.ebx = cpu.ebx; \
-    regs.esp = cpu.esp; \
-    regs.ebp = cpu.ebp; \
-    regs.esi = cpu.esi; \
-    regs.edi = cpu.edi; \
-    regs.eip = cpu.eip; \
+#define regcpy_from_nemu(regs)                                                 \
+  do {                                                                         \
+    regs.eax = cpu.eax;                                                        \
+    regs.ecx = cpu.ecx;                                                        \
+    regs.edx = cpu.edx;                                                        \
+    regs.ebx = cpu.ebx;                                                        \
+    regs.esp = cpu.esp;                                                        \
+    regs.ebp = cpu.ebp;                                                        \
+    regs.esi = cpu.esi;                                                        \
+    regs.edi = cpu.edi;                                                        \
+    regs.eip = cpu.eip;                                                        \
   } while (0)
 
 static uint8_t mbr[] = {
-  // start16:
-  0xfa,                           // cli
-  0x31, 0xc0,                     // xorw   %ax,%ax
-  0x8e, 0xd8,                     // movw   %ax,%ds
-  0x8e, 0xc0,                     // movw   %ax,%es
-  0x8e, 0xd0,                     // movw   %ax,%ss
-  0x0f, 0x01, 0x16, 0x44, 0x7c,   // lgdt   gdtdesc
-  0x0f, 0x20, 0xc0,               // movl   %cr0,%eax
-  0x66, 0x83, 0xc8, 0x01,         // orl    $CR0_PE,%eax
-  0x0f, 0x22, 0xc0,               // movl   %eax,%cr0
-  0xea, 0x1d, 0x7c, 0x08, 0x00,   // ljmp   $GDT_ENTRY(1),$start32
+    // start16:
+    0xfa,                         // cli
+    0x31, 0xc0,                   // xorw   %ax,%ax
+    0x8e, 0xd8,                   // movw   %ax,%ds
+    0x8e, 0xc0,                   // movw   %ax,%es
+    0x8e, 0xd0,                   // movw   %ax,%ss
+    0x0f, 0x01, 0x16, 0x44, 0x7c, // lgdt   gdtdesc
+    0x0f, 0x20, 0xc0,             // movl   %cr0,%eax
+    0x66, 0x83, 0xc8, 0x01,       // orl    $CR0_PE,%eax
+    0x0f, 0x22, 0xc0,             // movl   %eax,%cr0
+    0xea, 0x1d, 0x7c, 0x08, 0x00, // ljmp   $GDT_ENTRY(1),$start32
 
-  // start32:
-  0x66, 0xb8, 0x10, 0x00,         // movw   $0x10,%ax
-  0x8e, 0xd8,                     // movw   %ax, %ds
-  0x8e, 0xc0,                     // movw   %ax, %es
-  0x8e, 0xd0,                     // movw   %ax, %ss
-  0xeb, 0xfe,                     // jmp    7c27
-  0x8d, 0x76, 0x00,               // lea    0x0(%esi),%esi
+    // start32:
+    0x66, 0xb8, 0x10, 0x00, // movw   $0x10,%ax
+    0x8e, 0xd8,             // movw   %ax, %ds
+    0x8e, 0xc0,             // movw   %ax, %es
+    0x8e, 0xd0,             // movw   %ax, %ss
+    0xeb, 0xfe,             // jmp    7c27
+    0x8d, 0x76, 0x00,       // lea    0x0(%esi),%esi
 
-  // GDT
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0xff, 0xff, 0x00, 0x00, 0x00, 0x9a, 0xcf, 0x00,
-  0xff, 0xff, 0x00, 0x00, 0x00, 0x92, 0xcf, 0x00,
+    // GDT
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00,
+    0x00, 0x9a, 0xcf, 0x00, 0xff, 0xff, 0x00, 0x00, 0x00, 0x92, 0xcf, 0x00,
 
-  // GDT descriptor
-  0x17, 0x00, 0x2c, 0x7c, 0x00, 0x00
-};
+    // GDT descriptor
+    0x17, 0x00, 0x2c, 0x7c, 0x00, 0x00};
 
 void init_difftest(void) {
   int ppid_before_fork = getpid();
@@ -69,8 +67,7 @@ void init_difftest(void) {
   if (pid == -1) {
     perror("fork");
     panic("fork error");
-  }
-  else if (pid == 0) {
+  } else if (pid == 0) {
     // child
 
     // install a parent death signal in the chlid
@@ -85,11 +82,11 @@ void init_difftest(void) {
     }
 
     close(STDIN_FILENO);
-    execlp("qemu-system-i386", "qemu-system-i386", "-S", "-s", "-nographic", NULL);
+    execlp("qemu-system-i386", "qemu-system-i386", "-S", "-s", "-nographic",
+           NULL);
     perror("exec");
     panic("exec error");
-  }
-  else {
+  } else {
     // father
 
     gdb_connect_qemu();
@@ -112,7 +109,7 @@ void init_difftest(void) {
 
     // execute enough instructions to enter protected mode
     int i;
-    for (i = 0; i < 20; i ++) {
+    for (i = 0; i < 20; i++) {
       gdb_si();
     }
   }
@@ -148,44 +145,45 @@ void difftest_step(uint32_t eip) {
   gdb_getregs(&r);
 
   // Set `diff` as `true` if they are not the same.
-  if(r.eax != cpu.eax) {
+  if (r.eax != cpu.eax) {
     diff = true;
     printf("eax different! NEMU = 0x%08x \t QEMU = 0x%08x\n", cpu.eax, r.eax);
   }
-  if(r.ecx != cpu.ecx) {
+  if (r.ecx != cpu.ecx) {
     diff = true;
     printf("ecx different! NEMU = 0x%08x \t QEMU = 0x%08x\n", cpu.ecx, r.ecx);
   }
-  if(r.ebx != cpu.ebx) {
+  if (r.ebx != cpu.ebx) {
     diff = true;
     printf("ebx different! NEMU = 0x%08x \t QEMU = 0x%08x\n", cpu.ebx, r.ebx);
   }
-  if(r.edx != cpu.edx) {
+  if (r.edx != cpu.edx) {
     diff = true;
     printf("edx different! NEMU = 0x%08x \t QEMU = 0x%08x\n", cpu.edx, r.edx);
   }
-  if(r.ebp != cpu.ebp) {
+  if (r.ebp != cpu.ebp) {
     diff = true;
     printf("ebx different! NEMU = 0x%08x \t QEMU = 0x%08x\n", cpu.ebp, r.ebp);
   }
-  if(r.esp != cpu.esp) {
+  if (r.esp != cpu.esp) {
     diff = true;
     printf("esp different! NEMU = 0x%08x \t QEMU = 0x%08x\n", cpu.esp, r.esp);
   }
-  if(r.esi != cpu.esi) {
+  if (r.esi != cpu.esi) {
     diff = true;
     printf("esi different! NEMU = 0x%08x \t QEMU = 0x%08x\n", cpu.esi, r.esi);
   }
-  if(r.edi != cpu.edi) {
+  if (r.edi != cpu.edi) {
     diff = true;
     printf("edi different! NEMU = 0x%08x \t QEMU = 0x%08x\n", cpu.edi, r.edi);
   }
-  if(r.eip != cpu.eip) {
+  if (r.eip != cpu.eip) {
     diff = true;
     printf("eip different! NEMU = 0x%08x \t QEMU = 0x%08x\n", cpu.eip, r.eip);
   }
   if (diff) {
-    printf("EFLAGS : NEMU = 0x%08x \t QEMU = 0x%08x \n", cpu.eflags.val, r.eflags);
+    printf("EFLAGS : NEMU = 0x%08x \t QEMU = 0x%08x \n", cpu.eflags.val,
+           r.eflags);
     nemu_state = NEMU_END;
   }
 }
