@@ -17,7 +17,6 @@ make_EHelper(pop) {
 }
 
 make_EHelper(pusha) {
-  // attention! first save esp
   t0 = cpu.esp;
   rtl_push(&cpu.eax);
   rtl_push(&cpu.ecx);
@@ -34,7 +33,6 @@ make_EHelper(popa) {
   rtl_pop(&cpu.edi);
   rtl_pop(&cpu.esi);
   rtl_pop(&cpu.ebp);
-  // attention! do not need to restore esp
   rtl_pop(&t0);
   rtl_pop(&cpu.ebx);
   rtl_pop(&cpu.edx);
