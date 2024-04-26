@@ -1,7 +1,7 @@
 #include "common.h"
-#include "protocol.h"
 #include <stdlib.h>
 #include <unistd.h>
+#include "protocol.h"
 
 static struct gdb_conn *conn;
 
@@ -19,9 +19,8 @@ static bool gdb_memcpy_to_qemu_small(uint32_t dest, void *src, int len) {
   assert(buf != NULL);
   int p = sprintf(buf, "M0x%x,%x:", dest, len);
   int i;
-  for (i = 0; i < len; i++) {
-    p += sprintf(buf + p, "%c%c", hex_encode(((uint8_t *)src)[i] >> 4),
-                 hex_encode(((uint8_t *)src)[i] & 0xf));
+  for (i = 0; i < len; i ++) {
+    p += sprintf(buf + p, "%c%c", hex_encode(((uint8_t *)src)[i] >> 4), hex_encode(((uint8_t *)src)[i] & 0xf));
   }
 
   gdb_send(conn, (const uint8_t *)buf, strlen(buf));
@@ -29,7 +28,7 @@ static bool gdb_memcpy_to_qemu_small(uint32_t dest, void *src, int len) {
 
   size_t size;
   uint8_t *reply = gdb_recv(conn, &size);
-  bool ok = !strcmp((const char *)reply, "OK");
+  bool ok = !strcmp((const char*)reply, "OK");
   free(reply);
 
   return ok;
@@ -56,7 +55,7 @@ bool gdb_getregs(union gdb_regs *r) {
   int i;
   uint8_t *p = reply;
   uint8_t c;
-  for (i = 0; i < sizeof(union gdb_regs) / sizeof(uint32_t); i++) {
+  for (i = 0; i < sizeof(union gdb_regs) / sizeof(uint32_t); i ++) {
     c = p[8];
     p[8] = '\0';
     r->array[i] = gdb_decode_hex_str(p);
@@ -78,9 +77,8 @@ bool gdb_setregs(union gdb_regs *r) {
   void *src = r;
   int p = 1;
   int i;
-  for (i = 0; i < len; i++) {
-    p += sprintf(buf + p, "%c%c", hex_encode(((uint8_t *)src)[i] >> 4),
-                 hex_encode(((uint8_t *)src)[i] & 0xf));
+  for (i = 0; i < len; i ++) {
+    p += sprintf(buf + p, "%c%c", hex_encode(((uint8_t *)src)[i] >> 4), hex_encode(((uint8_t *)src)[i] & 0xf));
   }
 
   gdb_send(conn, (const uint8_t *)buf, strlen(buf));
@@ -88,7 +86,7 @@ bool gdb_setregs(union gdb_regs *r) {
 
   size_t size;
   uint8_t *reply = gdb_recv(conn, &size);
-  bool ok = !strcmp((const char *)reply, "OK");
+  bool ok = !strcmp((const char*)reply, "OK");
   free(reply);
 
   return ok;
@@ -103,4 +101,6 @@ bool gdb_si(void) {
   return true;
 }
 
-void gdb_exit(void) { gdb_end(conn); }
+void gdb_exit(void) {
+  gdb_end(conn);
+}

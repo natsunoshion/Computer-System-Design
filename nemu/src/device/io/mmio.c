@@ -1,5 +1,5 @@
-#include "device/mmio.h"
 #include "common.h"
+#include "device/mmio.h"
 
 #define MMIO_SPACE_MAX (512 * 1024)
 #define NR_MAP 8
@@ -18,7 +18,7 @@ static MMIO_t maps[NR_MAP];
 static int nr_map = 0;
 
 /* device interface */
-void *add_mmio_map(paddr_t addr, int len, mmio_callback_t callback) {
+void* add_mmio_map(paddr_t addr, int len, mmio_callback_t callback) {
   assert(nr_map < NR_MAP);
   assert(mmio_space_free_index + len <= MMIO_SPACE_MAX);
 
@@ -27,7 +27,7 @@ void *add_mmio_map(paddr_t addr, int len, mmio_callback_t callback) {
   maps[nr_map].high = addr + len - 1;
   maps[nr_map].mmio_space = space_base;
   maps[nr_map].callback = callback;
-  nr_map++;
+  nr_map ++;
   mmio_space_free_index += len;
   return space_base;
 }
@@ -35,7 +35,7 @@ void *add_mmio_map(paddr_t addr, int len, mmio_callback_t callback) {
 /* bus interface */
 int is_mmio(paddr_t addr) {
   int i;
-  for (i = 0; i < nr_map; i++) {
+  for (i = 0; i < nr_map; i ++) {
     if (addr >= maps[i].low && addr <= maps[i].high) {
       return i;
     }
@@ -46,8 +46,8 @@ int is_mmio(paddr_t addr) {
 uint32_t mmio_read(paddr_t addr, int len, int map_NO) {
   assert(len >= 1 && len <= 4);
   MMIO_t *map = &maps[map_NO];
-  uint32_t data = *(uint32_t *)(map->mmio_space + (addr - map->low)) &
-                  (~0u >> ((4 - len) << 3));
+  uint32_t data = *(uint32_t *)(map->mmio_space + (addr - map->low)) 
+    & (~0u >> ((4 - len) << 3));
   map->callback(addr, len, false);
   return data;
 }
@@ -60,15 +60,10 @@ void mmio_write(paddr_t addr, int len, uint32_t data, int map_NO) {
   uint8_t *p_data = (uint8_t *)&data;
 
   switch (len) {
-  case 4:
-    p[3] = p_data[3];
-  case 3:
-    p[2] = p_data[2];
-  case 2:
-    p[1] = p_data[1];
-  case 1:
-    p[0] = p_data[0];
-    break;
+    case 4: p[3] = p_data[3];
+    case 3: p[2] = p_data[2];
+    case 2: p[1] = p_data[1];
+    case 1: p[0] = p_data[0]; break;
   }
 
   maps[map_NO].callback(addr, len, true);

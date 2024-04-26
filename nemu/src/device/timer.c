@@ -2,7 +2,7 @@
 #include "monitor/monitor.h"
 #include <sys/time.h>
 
-#define RTC_PORT 0x48 // Note that this is not the standard
+#define RTC_PORT 0x48   // Note that this is not the standard
 
 void timer_intr() {
   if (nemu_state == NEMU_RUNNING) {
@@ -23,4 +23,6 @@ void rtc_io_handler(ioaddr_t addr, int len, bool is_write) {
   }
 }
 
-void init_timer() { rtc_port_base = add_pio_map(RTC_PORT, 4, rtc_io_handler); }
+void init_timer() {
+  rtc_port_base = add_pio_map(RTC_PORT, 4, rtc_io_handler);
+}
