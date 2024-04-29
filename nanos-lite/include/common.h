@@ -1,9 +1,9 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+#include "debug.h"
 #include <am.h>
 #include <klib.h>
-#include "debug.h"
 
 typedef char bool;
 #define true 1
