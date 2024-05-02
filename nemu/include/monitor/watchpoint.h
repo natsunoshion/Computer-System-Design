@@ -8,7 +8,7 @@ typedef struct watchpoint {
   struct watchpoint *next;
 
   /* TODO: Add more members if necessary */
-  int old; //旧的值
+  int old;    //旧的值
   char e[32]; //表达式
   int hitNum; //记录触发次数
 
