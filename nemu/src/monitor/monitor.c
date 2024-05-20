@@ -19,8 +19,7 @@ static int is_batch_mode = false;
 
 static inline void init_log() {
 #ifdef DEBUG
-  if (log_file == NULL)
-    return;
+  if (log_file == NULL) return;
   log_fp = fopen(log_file, "w");
   Assert(log_fp, "Can not open '%s'", log_file);
 #endif
@@ -33,17 +32,16 @@ static inline void welcome() {
 }
 
 static inline int load_default_img() {
-  const uint8_t img[] = {
-      0xb8, 0x34, 0x12, 0x00, 0x00,       // 100000:  movl  $0x1234,%eax
-      0xb9, 0x27, 0x00, 0x10, 0x00,       // 100005:  movl  $0x100027,%ecx
-      0x89, 0x01,                         // 10000a:  movl  %eax,(%ecx)
-      0x66, 0xc7, 0x41, 0x04, 0x01, 0x00, // 10000c:  movw  $0x1,0x4(%ecx)
-      0xbb, 0x02, 0x00, 0x00, 0x00,       // 100012:  movl  $0x2,%ebx
-      0x66, 0xc7, 0x84, 0x99, 0x00, 0xe0, // 100017:  movw
-                                          // $0x1,-0x2000(%ecx,%ebx,4)
-      0xff, 0xff, 0x01, 0x00, 0xb8, 0x00, 0x00,
-      0x00, 0x00, // 100021:  movl  $0x0,%eax
-      0xd6,       // 100026:  nemu_trap
+  const uint8_t img []  = {
+    0xb8, 0x34, 0x12, 0x00, 0x00,        // 100000:  movl  $0x1234,%eax
+    0xb9, 0x27, 0x00, 0x10, 0x00,        // 100005:  movl  $0x100027,%ecx
+    0x89, 0x01,                          // 10000a:  movl  %eax,(%ecx)
+    0x66, 0xc7, 0x41, 0x04, 0x01, 0x00,  // 10000c:  movw  $0x1,0x4(%ecx)
+    0xbb, 0x02, 0x00, 0x00, 0x00,        // 100012:  movl  $0x2,%ebx
+    0x66, 0xc7, 0x84, 0x99, 0x00, 0xe0,  // 100017:  movw  $0x1,-0x2000(%ecx,%ebx,4)
+    0xff, 0xff, 0x01, 0x00,
+    0xb8, 0x00, 0x00, 0x00, 0x00,        // 100021:  movl  $0x0,%eax
+    0xd6,                                // 100026:  nemu_trap
   };
 
   Log("No image is given. Use the default build-in image.");
@@ -57,7 +55,8 @@ static inline void load_img() {
   long size;
   if (img_file == NULL) {
     size = load_default_img();
-  } else {
+  }
+  else {
     int ret;
 
     FILE *fp = fopen(img_file, "rb");
@@ -83,10 +82,17 @@ static inline void load_img() {
 static inline void restart() {
   /* Set the initial instruction pointer. */
   cpu.eip = ENTRY_START;
-  cpu.cs = 8;
-  unsigned int origin = 2;
-  memcpy(&cpu.eflags, &origin, sizeof(cpu.eflags));
-
+  cpu.EFLAGS.val=0x00000002;
+  cpu.CS=0x8;
+  cpu.CR0.val=0x60000011;
+  /*
+  cpu.EFLAGS.CF=0;
+  cpu.EFLAGS.F=1;
+  cpu.EFLAGS.ZF=0;
+  cpu.EFLAGS.SF=0;
+  cpu.EFLAGS.IF=0;
+  cpu.EFLAGS.OF=0;
+  */
 #ifdef DIFF_TEST
   init_qemu_reg();
 #endif
@@ -94,22 +100,16 @@ static inline void restart() {
 
 static inline void parse_args(int argc, char *argv[]) {
   int o;
-  while ((o = getopt(argc, argv, "-bl:")) != -1) {
+  while ( (o = getopt(argc, argv, "-bl:")) != -1) {
     switch (o) {
-    case 'b':
-      is_batch_mode = true;
-      break;
-    case 'l':
-      log_file = optarg;
-      break;
-    case 1:
-      if (img_file != NULL)
-        Log("too much argument '%s', ignored", optarg);
-      else
-        img_file = optarg;
-      break;
-    default:
-      panic("Usage: %s [-b] [-l log_file] [img_file]", argv[0]);
+      case 'b': is_batch_mode = true; break;
+      case 'l': log_file = optarg; break;
+      case 1:
+                if (img_file != NULL) Log("too much argument '%s', ignored", optarg);
+                else img_file = optarg;
+                break;
+      default:
+                panic("Usage: %s [-b] [-l log_file] [img_file]", argv[0]);
     }
   }
 }
