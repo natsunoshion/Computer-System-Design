@@ -1,73 +1,75 @@
-#include "syscall.h"
-#include <assert.h>
+#include <unistd.h>
 #include <stdint.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <assert.h>
 #include <time.h>
-#include <unistd.h>
+#include "syscall.h"
 
 // TODO: discuss with syscall interface
 #ifndef __ISA_NATIVE__
 
 // FIXME: this is temporary
 
-int _syscall_(int type, uintptr_t a0, uintptr_t a1, uintptr_t a2) {
-  int ret = -1;
-  asm volatile("int $0x80" : "=a"(ret) : "a"(type), "b"(a0), "c"(a1), "d"(a2));
+int _syscall_(int type, uintptr_t a0, uintptr_t a1, uintptr_t a2){
+  int ret = -1;		
+  asm volatile("int $0x80": "=a"(ret): "a"(type), "b"(a0), "c"(a1), "d"(a2));
   return ret;
 }
 
-void _exit(int status) { _syscall_(SYS_exit, status, 0, 0); }
+void _exit(int status) {
+  _syscall_(SYS_exit, status, 0, 0);
+}
 
+//ignore flags and mode
 int _open(const char *path, int flags, mode_t mode) {
-  // _exit(SYS_open);
-  return _syscall_(SYS_open, (uintptr_t)path, flags, mode);
+ return  _syscall_(SYS_open,(uintptr_t)path,flags,mode);
+
 }
 
-int _write(int fd, void *buf, size_t count) {
-  return _syscall_(SYS_write, fd, (uintptr_t)buf, count);
+int _write(int fd, void *buf, size_t count){
+ return _syscall_(SYS_write,fd,(uintptr_t)buf,count);
+  //_exit(SYS_write);
 }
 
-void *_sbrk(intptr_t increment) {
-  extern int end;
-  static uintptr_t probreak = (uintptr_t)&end;
-  uintptr_t probreak_new = probreak + increment;
-  int r = _syscall_(SYS_brk, probreak_new, 0, 0);
-  if (r == 0) {
-    uintptr_t temp = probreak;
-    probreak = probreak_new;
-    return (void *)temp;
-  }
-  return (void *)-1;
+extern char _end;
+static intptr_t pb=(intptr_t) &_end; 
+void *_sbrk(intptr_t increment){
+	intptr_t before=pb;	
+	intptr_t ret= _syscall_(SYS_brk,before+increment,0,0);
+	if(ret==0){
+		pb+=increment;
+		return (void*)before;
+	}
+	else return (void *)-1;
 }
 
 int _read(int fd, void *buf, size_t count) {
-  // _exit(SYS_read);
-  return _syscall_(SYS_read, fd, (uintptr_t)buf, count);
+  return  _syscall_(SYS_read,fd,(uintptr_t)buf,count); 
 }
 
 int _close(int fd) {
-  // _exit(SYS_close);
-  return _syscall_(SYS_close, fd, 0, 0);
+  return _syscall_(SYS_close,fd,0,0);
 }
 
 off_t _lseek(int fd, off_t offset, int whence) {
-  // _exit(SYS_lseek);
-  return _syscall_(SYS_lseek, fd, offset, whence);
+ return _syscall_(SYS_lseek,fd,offset,whence);
 }
 
 // The code below is not used by Nanos-lite.
 // But to pass linking, they are defined as dummy functions
 
 // not implement but used
-int _fstat(int fd, struct stat *buf) { return 0; }
+int _fstat(int fd, struct stat *buf) {
+  return 0;
+}
 
-int execve(const char *fname, char *const argv[], char *const envp[]) {
+int execve(const char *fname, char * const argv[], char *const envp[]) {
   assert(0);
   return -1;
 }
 
-int _execve(const char *fname, char *const argv[], char *const envp[]) {
+int _execve(const char *fname, char * const argv[], char *const envp[]) {
   return execve(fname, argv, envp);
 }
 
@@ -125,7 +127,7 @@ int _gettimeofday(struct timeval *tv) {
   return 0;
 }
 
-int _fcntl(int fd, int cmd, ...) {
+int _fcntl(int fd, int cmd, ... ) {
   assert(0);
   return 0;
 }

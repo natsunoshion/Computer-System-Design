@@ -4,14 +4,14 @@
  *   display a boot menu and receive input
  */
 
-#include <assert.h>
-#include <fcntl.h>
-#include <ndl.h>
-#include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <fcntl.h>
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
+#include <ndl.h>
 
 #define logo_size 64
 const char *startup_app = "/bin/lua";
@@ -22,23 +22,24 @@ FILE *fbdev, *evtdev;
 struct MenuItem {
   const char *name, *bin, *arg1;
 } items[] = {
-    {"Graphical Shell", "/bin/nwm", NULL},
-    {"Lua shell", "/bin/lua", NULL},
-    {"Vi the text editor (busybox)", "/bin/vi", NULL},
-    {"Litenes (Super Mario Bros)", "/bin/litenes",
-     "/share/games/nes/mario.nes"},
-    {"Litenes (Yie Ar Kung Fu)", "/bin/litenes", "/share/games/nes/kungfu.nes"},
-    {"PAL - Xian Jian Qi Xia Zhuan", "/bin/pal", NULL},
+  {"Graphical Shell", "/bin/nwm", NULL},
+  {"Lua shell", "/bin/lua", NULL},
+  {"Vi the text editor (busybox)", "/bin/vi", NULL},
+  {"Litenes (Super Mario Bros)", "/bin/litenes", "/share/games/nes/mario.nes"},
+  {"Litenes (Yie Ar Kung Fu)", "/bin/litenes", "/share/games/nes/kungfu.nes"},
+  {"PAL - Xian Jian Qi Xia Zhuan", "/bin/pal", NULL},
 };
 
 #define nitems (sizeof(items) / sizeof(items[0]))
+
 
 static void open_display();
 static void display_menu();
 
 int main(int argc, char *argv[], char *envp[]) {
 
-  if (!freopen("/dev/tty", "r", stdin) || !freopen("/dev/tty", "w", stdout) ||
+  if (!freopen("/dev/tty", "r", stdin) ||
+      !freopen("/dev/tty", "w", stdout) ||
       !freopen("/dev/tty", "w", stderr)) {
     // the OS does not meet the spec
     exit(1);
@@ -50,7 +51,7 @@ int main(int argc, char *argv[], char *envp[]) {
   open_display();
 
   if (fbdev) {
-    for (int i = 0; i < W * H; i++) {
+    for (int i = 0; i < W * H; i ++) {
       uint32_t col = 0xffffff;
       fwrite(&col, sizeof(uint32_t), 1, fbdev);
     }
@@ -58,7 +59,7 @@ int main(int argc, char *argv[], char *envp[]) {
 
     int dx = (W - logo.w) / 2;
     int dy = (H - logo.h) / 2;
-    for (int y = 0; y < logo.h; y++) {
+    for (int y = 0; y < logo.h; y ++) {
       fseek(fbdev, ((y + dy) * W + dx) * sizeof(uint32_t), SEEK_SET);
       fwrite(&logo.pixels[y * logo.w], sizeof(uint32_t), logo.w, fbdev);
     }
@@ -82,19 +83,17 @@ int main(int argc, char *argv[], char *envp[]) {
       }
     } while (i == 0);
 
-    if (i == 0)
-      continue;
+    if (i == 0) continue;
 
     if (i >= 1 && i <= nitems) {
       auto *item = &items[i - 1];
       const char *exec_argv[] = {
-          item->bin,
-          item->arg1,
-          NULL,
+        item->bin,
+        item->arg1,
+        NULL,
       };
-      execve(exec_argv[0], (char **)exec_argv, (char **)envp);
-      fprintf(stderr, "\033[31m[ERROR]\033[0m Exec %s failed.\n\n",
-              exec_argv[0]);
+      execve(exec_argv[0], (char**)exec_argv, (char**)envp);
+      fprintf(stderr, "\033[31m[ERROR]\033[0m Exec %s failed.\n\n", exec_argv[0]);
     } else {
       fprintf(stderr, "Choose a number between %d and %d\n\n", 1, nitems);
     }
@@ -115,10 +114,8 @@ static void open_display() {
     *(delim = strchr(buf, ':')) = '\0';
     sscanf(buf, "%s", key);
     sscanf(delim + 1, "%s", value);
-    if (strcmp(key, "WIDTH") == 0)
-      sscanf(value, "%d", &W);
-    if (strcmp(key, "HEIGHT") == 0)
-      sscanf(value, "%d", &H);
+    if (strcmp(key, "WIDTH") == 0) sscanf(value, "%d", &W);
+    if (strcmp(key, "HEIGHT") == 0) sscanf(value, "%d", &H);
   }
 
   fclose(dispinfo);
@@ -136,7 +133,7 @@ static void open_display() {
 
 static void display_menu() {
   printf("Available applications:\n");
-  for (int i = 0; i < nitems; i++) {
+  for (int i = 0; i < nitems; i ++) {
     auto *item = &items[i];
     printf("  [%d] %s\n", i + 1, item->name);
   }

@@ -1,19 +1,4 @@
-    if (getenv("NWM_APP")) {
-      open_fifo();
-      open_display();
-      W = H = 0;
-      mkfifo(NWM_FILE, 0666);
-      nwm_w = open(NWM_FILE, O_RDWR);
-      nwm_r = open(NWM_FILE, O_RDONLY | O_NONBLOCK);
-      assert(nwm_w != -1 && nwm_r != -1);
-
-      freopen(FIFO_FILE, "r", stdin);
-      freopen(NWM_FILE, "w", stdout);
-    }
-  }
-};
-
-OURCE
+#define _GNU_SOURCE
 #include <unistd.h>
 #include <dlfcn.h>
 #include <assert.h>
