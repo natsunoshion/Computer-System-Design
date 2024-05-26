@@ -41,9 +41,8 @@ static inline make_DopHelper(SI) {
    op->simm = ???
    */
   uint32_t t = instr_fetch(eip, op->width);
-  rtl_sext(&t, &t, op->width); // 需要进行符号扩展！
-  op->simm = (int32_t)t;       // 指令中的立即数存到simm中
-
+  rtl_sext(&t, &t, op->width);
+  op->simm = (int32_t)t;
   rtl_li(&op->val, op->simm);
 
 #ifdef DEBUG

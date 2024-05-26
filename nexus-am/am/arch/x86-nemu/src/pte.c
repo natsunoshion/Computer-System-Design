@@ -66,7 +66,6 @@ void _switch(_Protect *p) { set_cr3(p->ptr); }
 void _map(_Protect *p, void *va, void *pa) {
   PDE *pgdir = (PDE *)p->ptr;
   PTE *pgtab = NULL;
-
   PDE *pde = pde = pgdir + PDX(va);
   if (!(*pde & PTE_P)) {
     pgtab = (PTE *)(palloc_f());

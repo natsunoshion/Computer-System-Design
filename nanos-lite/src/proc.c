@@ -26,7 +26,6 @@ void load_prog(const char *filename) {
   pcb[i].tf = _umake(&pcb[i].as, stack, stack, (void *)entry, NULL, NULL);
 }
 
-// иообндгп╩╩
 int count = 0;
 int current_game = 0;
 

@@ -11,7 +11,9 @@
     guest_to_host(addr);                                                       \
   })
 
+// »ñÈ¡pte
 #define PTE_ADDR(pte) ((uint32_t)(pte) & ~0xfff)
+// ½âÎöva
 #define PDX(va) (((uint32_t)(va) >> 22) & 0x3ff)
 #define PTX(va) (((uint32_t)(va) >> 12) & 0x3ff)
 #define OFF(va) ((uint32_t)(va)&0xfff)
@@ -38,7 +40,6 @@ paddr_t page_translate(vaddr_t addr, bool worr) {
   CR0 cr0 = (CR0)cpu.CR0;
   if (cr0.paging && cr0.protect_enable) {
     CR3 cr3 = (CR3)cpu.CR3;
-
     PDE *pgdir = (PDE *)PTE_ADDR(cr3.val);
     PDE pde = (PDE)paddr_read((uint32_t)(pgdir + PDX(addr)), 4);
     Assert(pde.present, "addr=0x%x", addr);
@@ -49,7 +50,6 @@ paddr_t page_translate(vaddr_t addr, bool worr) {
     Assert(pte.present, "addr=0x%x", addr);
     pte.accessed = 1;
     pte.dirty = worr ? 1 : pte.dirty;
-
     return PTE_ADDR(pte.val) | OFF(addr);
   }
   return addr;
