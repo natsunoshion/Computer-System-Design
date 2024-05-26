@@ -41,12 +41,12 @@ paddr_t page_translate(vaddr_t addr, bool worr) {
 
     PDE *pgdir = (PDE *)PTE_ADDR(cr3.val);
     PDE pde = (PDE)paddr_read((uint32_t)(pgdir + PDX(addr)), 4);
-    // Assert(pde.present, "addr=0x%x", addr);
+    Assert(pde.present, "addr=0x%x", addr);
     pde.accessed = 1;
 
     PTE *ptab = (PTE *)PTE_ADDR(pde.val);
     PTE pte = (PTE)paddr_read((uint32_t)(ptab + PTX(addr)), 4);
-    // Assert(pte.present, "addr=0x%x", addr);
+    Assert(pte.present, "addr=0x%x", addr);
     pte.accessed = 1;
     pte.dirty = worr ? 1 : pte.dirty;
 
