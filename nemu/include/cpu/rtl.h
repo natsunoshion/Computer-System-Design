@@ -209,7 +209,6 @@ static inline void rtl_update_ZFSF(const rtlreg_t *result, int width) {
   rtl_update_SF(result, width);
 }
 
-// ¶ÁÈ¡¼Ä´æÆ÷ÄÚÈİ
 static inline void rtl_load_cr(rtlreg_t *dest, int r) {
   switch (r) {
   case 0:
@@ -223,7 +222,6 @@ static inline void rtl_load_cr(rtlreg_t *dest, int r) {
   }
 }
 
-// Íù¼Ä´æÆ÷ÖĞĞ´ÄÚÈİ
 static inline void rtl_store_cr(int r, const rtlreg_t *src) {
   switch (r) {
   case 0:
