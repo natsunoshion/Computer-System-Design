@@ -6,9 +6,11 @@ DecodeInfo decoding;
 rtlreg_t t0, t1, t2, t3;
 const rtlreg_t tzero = 0;
 
-#define make_DopHelper(name) void concat(decode_op_, name) (vaddr_t *eip, Operand *op, bool load_val)
+#define make_DopHelper(name)                                                   \
+  void concat(decode_op_, name)(vaddr_t * eip, Operand * op, bool load_val)
 
-/* Refer to Appendix A in i386 manual for the explanations of these abbreviations */
+/* Refer to Appendix A in i386 manual for the explanations of these
+ * abbreviations */
 
 /* Ib, Iv */
 static inline make_DopHelper(I) {
@@ -38,9 +40,9 @@ static inline make_DopHelper(SI) {
    *
    op->simm = ???
    */
-  uint32_t t = instr_fetch(eip,op->width);
-  rtl_sext(&t, &t, op->width);  // 需要进行符号扩展！
-  op->simm = (int32_t)t;  // 指令中的立即数存到simm中
+  uint32_t t = instr_fetch(eip, op->width);
+  rtl_sext(&t, &t, op->width); // 需要进行符号扩展！
+  op->simm = (int32_t)t;       // 指令中的立即数存到simm中
 
   rtl_li(&op->val, op->simm);
 
@@ -91,7 +93,8 @@ static inline make_DopHelper(r) {
  * Rd
  * Sw
  */
-static inline void decode_op_rm(vaddr_t *eip, Operand *rm, bool load_rm_val, Operand *reg, bool load_reg_val) {
+static inline void decode_op_rm(vaddr_t *eip, Operand *rm, bool load_rm_val,
+                                Operand *reg, bool load_reg_val) {
   read_ModR_M(eip, rm, load_rm_val, reg, load_reg_val);
 }
 
@@ -111,28 +114,18 @@ static inline make_DopHelper(O) {
 /* Eb <- Gb
  * Ev <- Gv
  */
-make_DHelper(G2E) {
-  decode_op_rm(eip, id_dest, true, id_src, true);
-}
+make_DHelper(G2E) { decode_op_rm(eip, id_dest, true, id_src, true); }
 
-make_DHelper(mov_G2E) {
-  decode_op_rm(eip, id_dest, false, id_src, true);
-}
+make_DHelper(mov_G2E) { decode_op_rm(eip, id_dest, false, id_src, true); }
 
 /* Gb <- Eb
  * Gv <- Ev
  */
-make_DHelper(E2G) {
-  decode_op_rm(eip, id_src, true, id_dest, true);
-}
+make_DHelper(E2G) { decode_op_rm(eip, id_src, true, id_dest, true); }
 
-make_DHelper(mov_E2G) {
-  decode_op_rm(eip, id_src, true, id_dest, false);
-}
+make_DHelper(mov_E2G) { decode_op_rm(eip, id_src, true, id_dest, false); }
 
-make_DHelper(lea_M2G) {
-  decode_op_rm(eip, id_src, false, id_dest, false);
-}
+make_DHelper(lea_M2G) { decode_op_rm(eip, id_src, false, id_dest, false); }
 
 /* AL <- Ib
  * eAX <- Iv
@@ -177,26 +170,16 @@ make_DHelper(mov_I2r) {
 }
 
 /* used by unary operations */
-make_DHelper(I) {
-  decode_op_I(eip, id_dest, true);
-}
+make_DHelper(I) { decode_op_I(eip, id_dest, true); }
 
-make_DHelper(r) {
-  decode_op_r(eip, id_dest, true);
-}
+make_DHelper(r) { decode_op_r(eip, id_dest, true); }
 
-make_DHelper(E) {
-  decode_op_rm(eip, id_dest, true, NULL, false);
-}
+make_DHelper(E) { decode_op_rm(eip, id_dest, true, NULL, false); }
 
-make_DHelper(gp7_E) {
-  decode_op_rm(eip, id_dest, false, NULL, false);
-}
+make_DHelper(gp7_E) { decode_op_rm(eip, id_dest, false, NULL, false); }
 
 /* used by test in group3 */
-make_DHelper(test_I) {
-  decode_op_I(eip, id_src, true);
-}
+make_DHelper(test_I) { decode_op_I(eip, id_src, true); }
 
 make_DHelper(SI2E) {
   assert(id_dest->width == 2 || id_dest->width == 4);
@@ -268,9 +251,7 @@ make_DHelper(J) {
   decoding.jmp_eip = id_dest->simm + *eip;
 }
 
-make_DHelper(push_SI) {
-  decode_op_SI(eip, id_dest, true);
-}
+make_DHelper(push_SI) { decode_op_SI(eip, id_dest, true); }
 
 make_DHelper(in_I2a) {
   id_src->width = 1;
@@ -306,17 +287,19 @@ make_DHelper(out_a2dx) {
 #endif
 }
 
-make_DHelper(mov_load_cr){
-  decode_op_rm(eip,id_dest,false,id_src,false);
-  rtl_load_cr(&id_src->val,id_src->reg); // 寄存器内容读入src
+make_DHelper(mov_load_cr) {
+  decode_op_rm(eip, id_dest, false, id_src, false);
+  rtl_load_cr(&id_src->val, id_src->reg);
 }
 
-make_DHelper(mov_store_cr){
-  decode_op_rm(eip,id_src,true,id_dest,false);
-}
+make_DHelper(mov_store_cr) { decode_op_rm(eip, id_src, true, id_dest, false); }
 
-void operand_write(Operand *op, rtlreg_t* src) {
-  if (op->type == OP_TYPE_REG) { rtl_sr(op->reg, op->width, src); }
-  else if (op->type == OP_TYPE_MEM) { rtl_sm(&op->addr, op->width, src); }
-  else { assert(0); }
+void operand_write(Operand *op, rtlreg_t *src) {
+  if (op->type == OP_TYPE_REG) {
+    rtl_sr(op->reg, op->width, src);
+  } else if (op->type == OP_TYPE_MEM) {
+    rtl_sm(&op->addr, op->width, src);
+  } else {
+    assert(0);
+  }
 }
