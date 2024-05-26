@@ -9,7 +9,7 @@ PCB *current = NULL;
 uintptr_t loader(_Protect *as, const char *filename);
 
 void load_prog(const char *filename) {
-  int i = nr_proc ++;
+  int i = nr_proc++;
   _protect(&pcb[i].as);
 
   uintptr_t entry = loader(&pcb[i].as, filename);
@@ -28,20 +28,18 @@ void load_prog(const char *filename) {
 
 // ÉÏÏÂÎÄÇÐ»»
 int count = 0;
-int current_game=0;
+int current_game = 0;
 
-void game_change(){
-  current_game= 2-current_game;
-}
+void game_change() { current_game = 2 - current_game; }
 
-_RegSet* schedule(_RegSet *prev) {
+_RegSet *schedule(_RegSet *prev) {
   count++;
   current->tf = prev;
   current = &pcb[current_game];
-  
-  if(count==1200){
+
+  if (count == 1200) {
     current = &pcb[1];
-    count=0;
+    count = 0;
   }
   _switch(&current->as);
   return current->tf;
