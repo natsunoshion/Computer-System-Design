@@ -21,24 +21,58 @@ static inline void rtl_li(rtlreg_t *dest, uint32_t imm) { *dest = imm; }
 #define c_slt(a, b) ((int32_t)(a) < (int32_t)(b))
 #define c_sltu(a, b) ((a) < (b))
 
-#define make_rtl_arith_logic(name)                                             \
-  static inline void concat(rtl_, name)(rtlreg_t * dest, const rtlreg_t *src1, \
-                                        const rtlreg_t *src2) {                \
-    *dest = concat(c_, name)(*src1, *src2);                                    \
-  }                                                                            \
-  static inline void concat3(rtl_, name, i)(rtlreg_t * dest,                   \
-                                            const rtlreg_t *src1, int imm) {   \
-    *dest = concat(c_, name)(*src1, imm);                                      \
+#define make_rtl_arith_logic(name) \
+  static inline void concat(rtl_, name) (rtlreg_t* dest, const rtlreg_t* src1, const rtlreg_t* src2) { \
+    *dest = concat(c_, name) (*src1, *src2); \
+  } \
+  static inline void concat3(rtl_, name, i) (rtlreg_t* dest, const rtlreg_t* src1, int imm) { \
+    *dest = concat(c_, name) (*src1, imm); \
   }
 
-make_rtl_arith_logic(add) make_rtl_arith_logic(sub) make_rtl_arith_logic(and)
-    make_rtl_arith_logic(or) make_rtl_arith_logic(xor) make_rtl_arith_logic(shl)
-        make_rtl_arith_logic(shr) make_rtl_arith_logic(sar)
-            make_rtl_arith_logic(slt) make_rtl_arith_logic(sltu)
 
-                static inline void rtl_mul(rtlreg_t *dest_hi, rtlreg_t *dest_lo,
-                                           const rtlreg_t *src1,
-                                           const rtlreg_t *src2) {
+make_rtl_arith_logic(add)
+make_rtl_arith_logic(sub)
+make_rtl_arith_logic(and)
+make_rtl_arith_logic(or)
+make_rtl_arith_logic(xor)
+make_rtl_arith_logic(shl)
+make_rtl_arith_logic(shr)
+make_rtl_arith_logic(sar)
+make_rtl_arith_logic(slt)
+make_rtl_arith_logic(sltu)
+
+
+static inline void rtl_load_cr(rtlreg_t *dest, int r) {
+  switch (r) {
+  case 0:
+    *dest = cpu.CR0.val;
+    return;
+    break;
+  case 3:
+    *dest = cpu.CR3.val;
+    return;
+  default:
+    assert(0);
+  }
+  return;
+}
+
+static inline void rtl_store_cr(int r, const rtlreg_t *src) {
+  switch (r) {
+  case 0:
+    cpu.CR0.val = *src;
+    return;
+  case 3:
+    cpu.CR3.val = *src;
+    return;
+  default:
+    assert(0);
+  }
+  return;
+}
+
+static inline void rtl_mul(rtlreg_t *dest_hi, rtlreg_t *dest_lo,
+                           const rtlreg_t *src1, const rtlreg_t *src2) {
   asm volatile("mul %3"
                : "=d"(*dest_hi), "=a"(*dest_lo)
                : "a"(*src1), "r"(*src2));
@@ -211,3 +245,4 @@ static inline void rtl_update_ZFSF(const rtlreg_t *result, int width) {
 }
 
 #endif
+
