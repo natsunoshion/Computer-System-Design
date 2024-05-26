@@ -6,16 +6,16 @@
 typedef struct watchpoint {
   int NO;
   struct watchpoint *next;
+  int value;
+  char exprv[33];
 
   /* TODO: Add more members if necessary */
- char str[32];
- int value;
- int hitnum;
+
+
 } WP;
 
-WP* new_wp();
-bool free_wp(int NO);
-bool check_point();
-void show_point();
-
+WP * new_wp();
+void free_wp(int n);
+void show_wp();
+bool value_change();
 #endif

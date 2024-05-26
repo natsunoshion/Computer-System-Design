@@ -1,6 +1,6 @@
 #include <nwm.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 
 FILE *fbdev;
 
@@ -17,9 +17,8 @@ int main() {
     char buf[256];
     char *p = buf, ch;
     while ((ch = getc(events)) != -1) {
-      *p++ = ch;
-      if (ch == '\n')
-        break;
+      *p ++ = ch;
+      if (ch == '\n') break;
     }
     *p = 0;
     if (buf[0] != '\0') {
@@ -42,10 +41,8 @@ static void open_display() {
     *(delim = strchr(buf, ':')) = '\0';
     sscanf(buf, "%s", key);
     sscanf(delim + 1, "%s", value);
-    if (strcmp(key, "WIDTH") == 0)
-      sscanf(value, "%d", &W);
-    if (strcmp(key, "HEIGHT") == 0)
-      sscanf(value, "%d", &H);
+    if (strcmp(key, "WIDTH") == 0) sscanf(value, "%d", &W);
+    if (strcmp(key, "HEIGHT") == 0) sscanf(value, "%d", &H);
   }
 
   fclose(dispinfo);
@@ -61,3 +58,4 @@ static void open_display() {
     exit(1);
   }
 }
+

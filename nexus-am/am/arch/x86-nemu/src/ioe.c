@@ -8,7 +8,7 @@ void _ioe_init() {
   boot_time = inl(RTC_PORT);
 }
 
-unsigned long _uptime() {
+unsigned long _uptime() {  // 当前时间减去初始时间
   return inl(RTC_PORT)-boot_time;
 }
 
@@ -23,21 +23,17 @@ extern void* memcpy(void *, const void *, int);
 
 void _draw_rect(const uint32_t *pixels, int x, int y, int w, int h) {
   int i;
-  int j;
-  for (i =y ; i<y+h ; i++) {
-		  for(j=x;j<x+w;j++){
-		  	fb[j+i*_screen.width]=pixels[(j-x)+(i-y)*w];
-		  }
-  }
+  for(i=0;i<h;i++)  // 像素填空(x,y)-(x+w,y+h)的空间，一次一行
+    memcpy(fb+(y+i)*_screen.width+x,pixels+i*w,w*4);
+  
 }
 
 void _draw_sync() {
 }
 
 int _read_key() {
-   uint32_t KEY_CODE=_KEY_NONE;	
-   if(inb(0x64)&0x1){
-     KEY_CODE=inl(0x60);
-   }
-  return KEY_CODE;
+  if(inb(0x64) & 0x1){  // 状态寄存器为1，返回数据寄存器中的值
+    return inl(0x60);
+  }
+  return _KEY_NONE;
 }

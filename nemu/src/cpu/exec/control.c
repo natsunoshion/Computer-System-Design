@@ -26,22 +26,24 @@ make_EHelper(jmp_rm) {
 make_EHelper(call) {
   // the target address is calculated at the decode stage
   decoding.is_jmp=1;
-  rtl_li(&t0,decoding.seq_eip);
-  rtl_push(&t0);
+  rtl_push(&decoding.seq_eip);  // 当前pc压栈
+  //cpu.eip=decoding.jmp_eip;  // eip指向跳转目标地址
+
   print_asm("call %x", decoding.jmp_eip);
 }
 
-make_EHelper(ret) {
-  rtl_pop(&t0);
-  decoding.jmp_eip=t0;
+make_EHelper(ret) {  
+  rtl_pop(&t1);
+  decoding.jmp_eip=t1;  // 跳转到栈顶记录的返回地址
   decoding.is_jmp=1;
+
   print_asm("ret");
 }
 
 make_EHelper(call_rm) {
   decoding.is_jmp=1;
-  decoding.jmp_eip=id_dest->val;
-  rtl_li(&t2,decoding.seq_eip);
-  rtl_push(&t2);
+  decoding.jmp_eip = id_dest->val;
+  rtl_push(&decoding.seq_eip);
+
   print_asm("call *%s", id_dest->str);
 }

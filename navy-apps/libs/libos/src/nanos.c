@@ -8,11 +8,12 @@
 
 // TODO: discuss with syscall interface
 #ifndef __ISA_NATIVE__
-
+extern char _end;
+intptr_t pb =(intptr_t)&_end;
 // FIXME: this is temporary
 
 int _syscall_(int type, uintptr_t a0, uintptr_t a1, uintptr_t a2){
-  int ret = -1;		
+  int ret = -1;
   asm volatile("int $0x80": "=a"(ret): "a"(type), "b"(a0), "c"(a1), "d"(a2));
   return ret;
 }
@@ -21,39 +22,34 @@ void _exit(int status) {
   _syscall_(SYS_exit, status, 0, 0);
 }
 
-//ignore flags and mode
 int _open(const char *path, int flags, mode_t mode) {
- return  _syscall_(SYS_open,(uintptr_t)path,flags,mode);
-
+  return _syscall_(SYS_open, (uintptr_t)path, (uintptr_t)flags, (uintptr_t)mode);
 }
 
 int _write(int fd, void *buf, size_t count){
- return _syscall_(SYS_write,fd,(uintptr_t)buf,count);
-  //_exit(SYS_write);
+  return _syscall_(SYS_write,fd,(uintptr_t)buf,count);
 }
 
-extern char _end;
-static intptr_t pb=(intptr_t) &_end; 
 void *_sbrk(intptr_t increment){
-	intptr_t before=pb;	
-	intptr_t ret= _syscall_(SYS_brk,before+increment,0,0);
-	if(ret==0){
-		pb+=increment;
-		return (void*)before;
-	}
-	else return (void *)-1;
+  intptr_t old_pb=pb;
+  int res=_syscall_(SYS_brk,old_pb+increment,0,0);  // 计算新的pb，进行系统调用
+  if(res!=0)return (void*)-1;  // 堆区调整失败，返回-1
+  else{  // 调整成功，更新pb，并返回原值
+    pb=pb+increment;
+    return (void*)old_pb;
+  }  
 }
 
 int _read(int fd, void *buf, size_t count) {
-  return  _syscall_(SYS_read,fd,(uintptr_t)buf,count); 
+  return _syscall_(SYS_read, (uintptr_t)fd, (uintptr_t)buf, (uintptr_t)count);
 }
 
 int _close(int fd) {
-  return _syscall_(SYS_close,fd,0,0);
+  return _syscall_(SYS_close, (uintptr_t)fd, 0, 0);
 }
 
 off_t _lseek(int fd, off_t offset, int whence) {
- return _syscall_(SYS_lseek,fd,offset,whence);
+  return _syscall_(SYS_lseek, (uintptr_t)fd, (uintptr_t)offset, (uintptr_t)whence);
 }
 
 // The code below is not used by Nanos-lite.

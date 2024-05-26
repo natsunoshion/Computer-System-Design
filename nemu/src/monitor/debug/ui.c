@@ -2,7 +2,7 @@
 #include "monitor/expr.h"
 #include "monitor/watchpoint.h"
 #include "nemu.h"
-#include "cpu/reg.h"
+
 #include <stdlib.h>
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -36,133 +36,81 @@ static int cmd_q(char *args) {
   return -1;
 }
 
+static int cmd_help(char *args);
+
 static int cmd_si(char *args){
-       if(args==NULL){
-	     cpu_exec(1);
-		 return 0;
-	   }
-       else{
-	   int t=atoi(args);
-	  	 if(t<=0){
-	  	 printf("wrong parement!!\n");
-	  	 return 0;
-	  	 	}
-	  	 else{
-	   		cpu_exec(t);
-			return 0;
-	   		}
-	   }
+  uint64_t steps=1; //默认为1
+  if(args==NULL){;}
+  else{
+    sscanf(args,"%llu",&steps);	//格式转换
+  }
+  cpu_exec(steps);
+  return 0;
 }
 
 static int cmd_info(char *args){
-		char s;
-		if(args==NULL){
-			printf("args error in cmd_info\n");
-			return 0;
-		
-		}
-		int ret=sscanf(args,"%c",&s);
-		if(ret<0){
-		 printf("args error\n");
-		 return 0;
-		}
-		if(s=='r'){
-				int i;
-
-				for(i=0;i<8;i++){
-				printf("%s  0x%x\n",regsl[i],reg_l(i));
-				}
-				printf("eip: 0x%X\n",cpu.eip);
-				for(i=0;i<8;i++){
-				 printf("%s  0x%x\n",regsw[i],reg_w(i));
-				}
-				for(i=0;i<8;i++){
-					printf("%s  0x%x\n",regsb[i],reg_b(i));
-				}
-				return 0;
-		}
-		else if(s=='w'){
-		  show_point();
-		 	return 0;
-		}
-		else{
-		 printf("args error!\n");
-		}
-		return 0;
+  char op;
+  if(args==NULL){;}
+  else{
+    sscanf(args,"%c",&op);
+    if(op=='r'){  //打印寄存器状态
+      printf("eip: 0x%x\n", cpu.eip); //eip
+      for(int i=0;i<8;i++)
+        printf("%s: 0x%x\n",regsl[i],reg_l(i)); //32位寄存器名称+当前存储的值
+      for(int i=0;i<8;i++)
+        printf("%s: 0x%x\n",regsw[i],reg_w(i)); //16位寄存器名称+当前存储的值
+      for(int i=0;i<8;i++)
+        printf("%s: 0x%x\n",regsb[i],reg_b(i)); //8位寄存器名称+当前存储的值
+      printf("CR0: 0x%x\n", cpu.CR0); //CR0
+      printf("CR3: 0x%x\n", cpu.CR3); //CR3
+    }
+    if(op=='w')show_wp();  // 打印监视点状态
+  }
+  return 0;
 }
 
 static int cmd_x(char *args){
-   char* N=strtok(args," ");
-   if(strcmp(N,"")==0){
-   printf("arg error\n");
-   return 0;
-   }
-   char* EXPR=args+strlen(N)+1;
-   bool *success=malloc(1);
-   uint32_t linenumber;
-	if(strcmp(EXPR,"")==0){ linenumber=0;}
-   else{
-    linenumber=expr(EXPR,success);
-   }
-
-	uint32_t n=atoi(N);
-	uint32_t a;
-	printf("Memory:");
-
-   for(int i=0;i<n;i++){
-    a=vaddr_read(linenumber,4);
-     printf("\n0x%x: 0x%08x",linenumber,a);
-	 linenumber+=4;
+  int len;
+  vaddr_t st;
+  char *c;
+  len = strtoul(args,&c,10); // N存入len，EXPR存入&c
+  bool succ;
+  st=expr(c+1,&succ);
+  printf("Memory:\n");
+  for(int i=0;i<len;i++){
+    printf("0x%08x: ",st);  //打印地址
+    uint32_t data =vaddr_read(st,4);
+    printf("0x%08x\n",data); //打印数据
+    st+=4;
   }
-   printf("\n");
-	return 0;
+  return 0;
 }
 
 static int cmd_p(char *args){
-	bool *success=malloc(1);
-   uint32_t res=expr(args,success);
-   if(*success)
-   printf("res:   %d\n",res);
-   else
-		printf("error\n");
-	return 0;
+  bool succ=1;
+  int res=expr(args,&succ);
+  if(succ==0)printf("求值失败！\n");
+  else printf("%d\n",res);
+  return 0;
 }
 
 static int cmd_w(char *args){
-		char *EXPR=strtok(args," ");
-        WP *temp;
-		temp=new_wp();
-		printf("%d : ",temp->NO);
-        memcpy(temp->str,EXPR,strlen(EXPR));
-	    printf("%s\n ",temp->str);	
-		bool *success=malloc(1);
-        temp->value=expr(EXPR,success);
-		printf(" value:%d\n",temp->value);
-		if(success){
-		
-			return 0;
-		}
-		else{
-	    printf("error\n");	
-		 return 0;
-		}
+  bool succ=1;
+  WP *wp=new_wp();
+  strcpy(wp->exprv,args);
+  wp->value=expr(args,&succ);
+  if(succ==0)printf("求值失败！\n");
+  printf("已将%d号监视点设置于%s\n",wp->NO,args);
+  return 0;
 }
 
 static int cmd_d(char *args){
-   char *N=strtok(args," ");
-   int n=atoi(N);
-   bool t=free_wp(n);
-   if(t==false){
-      printf("error:no watchpoint:%d\n",n);
-   }
-   else{
-   		printf("success delete watchpoint:%d\n",n);
-   }
-   return 0;
-
+  int no;
+  sscanf(args,"%d",&no);
+  free_wp(no);
+  printf("释放%d号监视点\n",no);
+  return 0;
 }
-
-static int cmd_help(char *args);
 
 static struct {
   char *name;
@@ -172,19 +120,15 @@ static struct {
   { "help", "Display informations about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
-  {"si","single execute",cmd_si},
-  {"x","x N EXPR",cmd_x},
-  {"info","information",cmd_info},
-  {"w","watchpoint",cmd_w},
-  {"d","delete watchpoint",cmd_d},
-  {"p","p expr",cmd_p},
+  { "si", "si [N] 单步执行N条指令", cmd_si},
+  { "info", "info r 打印寄存器状态", cmd_info},
+  { "x", "x N EXPR 从EXPR开始输出N个四字节数据", cmd_x},
+  { "p", "p EXPR 求出表达式EXPR的值", cmd_p},
+  { "w", "w EXPR 当EXPR的值发生变化时，暂停程序", cmd_w},
+  { "d", "d N 删除N号监视点", cmd_d},
   /* TODO: Add more commands */
 
 };
-
-
-
-
 
 #define NR_CMD (sizeof(cmd_table) / sizeof(cmd_table[0]))
 
