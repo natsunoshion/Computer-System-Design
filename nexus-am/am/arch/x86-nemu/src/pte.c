@@ -67,28 +67,27 @@ void _switch(_Protect *p) {
   set_cr3(p->ptr);
 }
 
-// 虚拟空间映射到物理空间
 void _map(_Protect *p, void *va, void *pa) {
-  PDE *pgdir=(PDE*)p->ptr; // 页目录表基址
-  PTE *pgtab=NULL; // 页表基址
+  PDE *pgdir=(PDE*)p->ptr; 
+  PTE *pgtab=NULL; 
 
   PDE *pde = pde=pgdir+PDX(va); 
-  if(!(*pde&PTE_P)){ // 没有对应页表
-    pgtab=(PTE*)(palloc_f()); // 进行申请
-    *pde=(uintptr_t)pgtab|PTE_P; // 进行映射
+  if(!(*pde&PTE_P)){ 
+    pgtab=(PTE*)(palloc_f()); 
+    *pde=(uintptr_t)pgtab|PTE_P; 
   } 
   
   pgtab=(PTE*)PTE_ADDR(*pde);
   PTE *pte=pgtab+PTX(va);
-  *pte=(uintptr_t)pa|PTE_P; // 进行映射
+  *pte=(uintptr_t)pa|PTE_P; 
 }
 
 void _unmap(_Protect *p, void *va) {
 }
 
-// 参数入栈->初始化陷阱帧->返回陷阱帧指针
+
 _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *const argv[], char *const envp[]) {
-  // 参数入栈，实际上并不会用到这些参数，设为0或NULL
+  
   int arg1=0;
   char *arg2=NULL;
   memcpy((void*)ustack.end-4,(void*)arg2,4);
@@ -96,11 +95,11 @@ _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *cons
   memcpy((void*)ustack.end-12,(void*)arg1,4);
   memcpy((void*)ustack.end-16,(void*)arg1,4);
   
-  // 初始化陷阱帧
+  
   _RegSet tf;
   tf.cs=8;
   tf.eflags=0x202;
-  tf.eip=(uintptr_t)entry; // 返回地址
+  tf.eip=(uintptr_t)entry; 
   void *tf_addr=(void*)(ustack.end-16-sizeof(tf));
   memcpy(tf_addr,(void*)&tf,sizeof(tf));
   return (_RegSet*)tf_addr;
