@@ -36,7 +36,7 @@ _RegSet *schedule(_RegSet *prev) {
   current->tf = prev;
   current = &pcb[current_game];
 
-  if (count == 10) {
+  if (count == 100) {
     current = &pcb[1];
     count = 0;
   }
